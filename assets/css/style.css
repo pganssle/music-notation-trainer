@@ -1,0 +1,160 @@
+body {
+  font-family: sans-serif;
+  margin: 0;
+}
+
+.container {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+}
+
+.top-row {
+  display: flex;
+  flex: 1;
+}
+
+#music-score {
+  flex: 3;
+  border: 1px solid #ccc;
+}
+
+.side-panel {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  border: 1px solid #ccc;
+}
+
+#settings, #stats, #controls {
+  flex: 1;
+  border: 1px solid #ccc;
+  padding: 10px;
+}
+
+#piano {
+  height: 200px;
+  border: 1px solid #ccc;
+}
+
+#feedback {
+    position: absolute;
+    right: 20px;
+    bottom: 220px;
+    font-size: 5em;
+}
+
+.panel {
+  margin: 5px;
+}
+
+#piano {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.key {
+    border: 1px solid #000;
+    cursor: pointer;
+}
+
+.white {
+    width: 40px;
+    height: 180px;
+    background-color: white;
+    margin-left: -1px;
+}
+
+.black {
+    width: 24px;
+    height: 120px;
+    background-color: black;
+    margin-left: -12px;
+    margin-right: -12px;
+    z-index: 2;
+}
+
+.middle-c::after {
+    content: '•';
+    position: absolute;
+    bottom: 5px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 20px;
+}
+
+.key.correct {
+    background-color: #a8e6cf;
+}
+
+.key.incorrect {
+    background-color: #ff8a80;
+}
+
+#settings-button {
+    font-size: 2em;
+    cursor: pointer;
+}
+
+.modal {
+    display: none;
+    position: fixed;
+    z-index: 100;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    overflow: auto;
+    background-color: rgba(0,0,0,0.4);
+}
+
+.modal-content {
+    background-color: #fefefe;
+    margin: 15% auto;
+    padding: 20px;
+    border: 1px solid #888;
+    width: 80%;
+}
+
+.close-button {
+    color: #aaa;
+    float: right;
+    font-size: 28px;
+    font-weight: bold;
+}
+
+.close-button:hover,
+.close-button:focus {
+    color: black;
+    text-decoration: none;
+    cursor: pointer;
+}
+
+#stats-widget {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 1.5em;
+}
+
+#reset-session-button, #history-button {
+    cursor: pointer;
+    margin-left: 10px;
+}
+
+#history-button {
+    font-size: 2em;
+    margin-top: 10px;
+}
+
+#controls {
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+    font-size: 2em;
+}
+
+#undo-button, #next-button {
+    cursor: pointer;
+}
