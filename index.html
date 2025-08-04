@@ -1,0 +1,62 @@
+---
+layout: default
+---
+<div class="container">
+  <div class="top-row">
+    <div id="music-score" class="panel"></div>
+    <div id="self-assessment" class="hidden">
+        <button data-value="0">Wrong</button>
+        <button data-value="1">Hard</button>
+        <button data-value="2">Good</button>
+        <button data-value="3">Easy</button>
+    </div>
+    <div class="side-panel">
+      <div id="settings" class="panel">
+        <i class="fa fa-music" id="settings-button"></i>
+      </div>
+      <div id="settings-modal" class="modal">
+        <div class="modal-content">
+          <span class="close-button">&times;</span>
+          <h2>Settings</h2>
+          <div class="setting">
+            <label for="bass-clef-range">Bass Clef Range:</label>
+            <input type="text" id="bass-clef-range" value="B1-D4">
+          </div>
+          <div class="setting">
+            <label for="treble-clef-range">Treble Clef Range:</label>
+            <input type="text" id="treble-clef-range" value="B3-D6">
+          </div>
+          <div class="setting">
+            <label for="include-sharps">Include Sharps:</label>
+            <input type="checkbox" id="include-sharps" checked>
+          </div>
+          <div class="setting">
+            <label for="include-flats">Include Flats:</label>
+            <input type="checkbox" id="include-flats">
+          </div>
+          <button id="save-settings">Save</button>
+        </div>
+      </div>
+      <div id="stats" class="panel">
+        <div id="stats-widget">
+            <span id="stats-display">0 / 0 (0%)</span>
+            <i class="fa fa-refresh" id="reset-session-button"></i>
+        </div>
+        <i class="fa fa-history" id="history-button"></i>
+      </div>
+      <div id="history-modal" class="modal">
+        <div class="modal-content">
+            <span class="close-button">&times;</span>
+            <h2>Session History</h2>
+            <div id="session-history-list"></div>
+        </div>
+      </div>
+      <div id="controls" class="panel">
+        <i class="fa fa-undo" id="undo-button"></i>
+        <i class="fa fa-arrow-right" id="next-button"></i>
+      </div>
+    </div>
+  </div>
+  <div id="piano" class="panel"></div>
+  <div id="feedback"></div>
+</div>
