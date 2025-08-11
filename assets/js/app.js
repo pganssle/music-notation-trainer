@@ -1,3 +1,5 @@
+import { Factory } from 'vexflow';
+
 const state = {
     currentUser: "default",
     users: {
@@ -106,13 +108,25 @@ function init() {
 
     if ('serviceWorker' in navigator) {
         window.addEventListener('load', () => {
-            navigator.serviceWorker.register('/sw.js').then(registration => {
+            navigator.serviceWorker.register(new URL('/sw.js', import.meta.url)).then(registration => {
                 console.log('ServiceWorker registration successful with scope: ', registration.scope);
             }, err => {
                 console.log('ServiceWorker registration failed: ', err);
             });
         });
     }
+
+    const selfAssessment = document.getElementById("self-assessment");
+    selfAssessment.addEventListener("click", (event) => {
+        if (event.target.tagName === "BUTTON") {
+            const value = parseInt(event.target.dataset.value, 10);
+            const lastGuess = state.users.default.currentSession.guesses.slice(-1)[0];
+            if (lastGuess) {
+                lastGuess.selfAssessment = value;
+            }
+            selfAssessment.classList.add("hidden");
+        }
+    });
 }
 
 function startNewRound() {
@@ -268,12 +282,15 @@ function handleGuess(note) {
     nextButton.classList.remove("fa-arrow-right");
     nextButton.classList.add("fa-forward");
     state.noteAnswered = true;
+
+    // Show self-assessment buttons
+    const selfAssessment = document.getElementById("self-assessment");
+    selfAssessment.classList.remove("hidden");
 }
 
 function drawNote(clef, note) {
     const musicScore = document.getElementById("music-score");
     musicScore.innerHTML = "";
-    const { Factory } = Vex.Flow;
     const vf = new Factory({ renderer: { elementId: 'music-score' } });
     const score = vf.EasyScore();
     const system = vf.System();
