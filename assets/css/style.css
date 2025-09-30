@@ -17,6 +17,10 @@ body {
 #music-score {
   flex: 3;
   border: 1px solid #ccc;
+  position: relative;
+  display: flex;
+  justify-content: center;
+  align-items: center;
 }
 
 .side-panel {
@@ -26,7 +30,7 @@ body {
   border: 1px solid #ccc;
 }
 
-#settings, #stats, #controls {
+#settings, #stats {
   flex: 1;
   border: 1px solid #ccc;
   padding: 10px;
@@ -148,37 +152,81 @@ body {
     margin-top: 10px;
 }
 
-#controls {
+
+#answer-controls {
+    position: absolute;
+    bottom: 10px;
+    left: 50%;
+    transform: translateX(-50%);
     display: flex;
-    justify-content: space-around;
-    align-items: center;
-    font-size: 2em;
+    justify-content: center;
+    padding: 15px;
+    background-color: rgba(249, 249, 249, 0.95);
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    z-index: 5;
 }
 
-#undo-button, #next-button {
-    cursor: pointer;
-}
-
-#self-assessment {
+#assessment-buttons, #next-controls {
     display: flex;
-    justify-content: space-around;
-    padding: 10px;
-    margin: 10px 0;
+    justify-content: center;
+    gap: 15px;
 }
 
-#self-assessment.hidden {
+#assessment-buttons.hidden, #next-controls.hidden {
     display: none;
 }
 
-#self-assessment button {
-    padding: 10px 20px;
-    margin: 0 5px;
+#assessment-buttons button, #next-controls button {
+    padding: 12px 24px;
     cursor: pointer;
-    border: 1px solid #ccc;
+    border: 2px solid #007bff;
     background-color: white;
-    border-radius: 5px;
+    color: #007bff;
+    border-radius: 8px;
+    font-weight: bold;
+    font-size: 1em;
+    transition: all 0.2s ease;
 }
 
-#self-assessment button:hover {
+#assessment-buttons button:hover, #next-controls button:hover {
+    background-color: #007bff;
+    color: white;
+}
+
+#next-controls button {
+    background-color: #28a745;
+    border-color: #28a745;
+    color: white;
+    padding: 12px 48px;
+}
+
+#next-controls button:hover {
+    background-color: #218838;
+    border-color: #1e7e34;
+}
+
+#floating-controls {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    display: flex;
+    gap: 10px;
+    z-index: 10;
+}
+
+#floating-controls i {
+    cursor: pointer;
+    font-size: 1.5em;
+    color: #666;
+    padding: 8px;
+    border-radius: 4px;
+    background-color: rgba(255, 255, 255, 0.9);
+    border: 1px solid #ccc;
+}
+
+#floating-controls i:hover {
+    color: #333;
     background-color: #f0f0f0;
 }
