@@ -93,31 +93,35 @@ function init() {
     });
 
     const undoButton = document.getElementById("undo-button");
-    const nextButton = document.getElementById("next-button");
-
-    undoButton.addEventListener("click", () => {
-        if (state.previousNote) {
-            state.currentNote = state.previousNote;
-            state.previousNote = null;
-            state.users.default.currentSession.guesses.pop();
-            drawNote(state.currentNote.clef, state.currentNote.note);
-            document.querySelectorAll(".key").forEach(key => {
-                key.classList.remove("correct", "incorrect");
-                key.addEventListener("click", handleKeyClick);
-            });
-            document.getElementById("feedback").textContent = "";
-        }
-    });
-
-    nextButton.addEventListener("click", () => {
-        console.log("Next button clicked");
-        startNewRound();
-    });
-
     const resetButton = document.getElementById("reset-session-button");
-    resetButton.addEventListener("click", () => {
-        resetSession();
-    });
+
+    if (undoButton) {
+        undoButton.addEventListener("click", () => {
+            if (state.previousNote) {
+                state.currentNote = state.previousNote;
+                state.previousNote = null;
+                state.users.default.currentSession.guesses.pop();
+                drawNote(state.currentNote.clef, state.currentNote.note);
+                document.querySelectorAll(".key").forEach(key => {
+                    key.classList.remove("correct", "incorrect");
+                    key.addEventListener("click", handleKeyClick);
+                });
+                document.getElementById("feedback").textContent = "";
+                document.getElementById("assessment-buttons").classList.add("hidden");
+                document.getElementById("next-controls").classList.add("hidden");
+            }
+        });
+    } else {
+        console.error("Undo button not found");
+    }
+
+    if (resetButton) {
+        resetButton.addEventListener("click", () => {
+            resetSession();
+        });
+    } else {
+        console.error("Reset button not found");
+    }
 
 
     if ('serviceWorker' in navigator) {
@@ -130,17 +134,38 @@ function init() {
         });
     }
 
-    const selfAssessment = document.getElementById("self-assessment");
-    selfAssessment.addEventListener("click", (event) => {
-        if (event.target.tagName === "BUTTON") {
-            const value = parseInt(event.target.dataset.value, 10);
-            const lastGuess = state.users.default.currentSession.guesses.slice(-1)[0];
-            if (lastGuess) {
-                lastGuess.selfAssessment = value;
+    // Handle assessment buttons
+    const assessmentButtons = document.getElementById("assessment-buttons");
+    console.log("Assessment buttons:", assessmentButtons);
+
+    if (assessmentButtons) {
+        assessmentButtons.addEventListener("click", (event) => {
+            if (event.target.tagName === "BUTTON") {
+                const value = parseInt(event.target.dataset.value, 10);
+                const lastGuess = state.users.default.currentSession.guesses.slice(-1)[0];
+                if (lastGuess) {
+                    lastGuess.selfAssessment = value;
+                }
+                assessmentButtons.classList.add("hidden");
+                startNewRound();
             }
-            selfAssessment.classList.add("hidden");
-        }
-    });
+        });
+    } else {
+        console.error("Assessment buttons not found");
+    }
+
+    // Handle next button (for wrong answers)
+    const nextButton = document.getElementById("next-button");
+    console.log("Next button:", nextButton);
+
+    if (nextButton) {
+        nextButton.addEventListener("click", () => {
+            document.getElementById("next-controls").classList.add("hidden");
+            startNewRound();
+        });
+    } else {
+        console.error("Next button not found");
+    }
 }
 
 function startNewRound() {
@@ -151,10 +176,10 @@ function startNewRound() {
     });
     document.getElementById("feedback").textContent = "";
 
-    // Reset next button
-    const nextButton = document.getElementById("next-button");
-    nextButton.classList.remove("fa-forward");
-    nextButton.classList.add("fa-arrow-right");
+    // Hide all answer controls
+    document.getElementById("assessment-buttons").classList.add("hidden");
+    document.getElementById("next-controls").classList.add("hidden");
+
 
     state.previousNote = state.currentNote;
     const lastNote = state.currentNote;
@@ -291,15 +316,16 @@ function handleGuess(note) {
         key.removeEventListener("click", handleKeyClick);
     });
 
-    // Change next button to skip button
-    const nextButton = document.getElementById("next-button");
-    nextButton.classList.remove("fa-arrow-right");
-    nextButton.classList.add("fa-forward");
     state.noteAnswered = true;
 
-    // Show self-assessment buttons
-    const selfAssessment = document.getElementById("self-assessment");
-    selfAssessment.classList.remove("hidden");
+    // Show appropriate controls based on answer correctness
+    if (note === correctNote) {
+        // Correct answer: show difficulty assessment buttons
+        document.getElementById("assessment-buttons").classList.remove("hidden");
+    } else {
+        // Wrong answer: show only next button
+        document.getElementById("next-controls").classList.remove("hidden");
+    }
 
     // Update stats
     updateStats();
@@ -307,16 +333,54 @@ function handleGuess(note) {
 
 function drawNote(clef, note) {
     const musicScore = document.getElementById("music-score");
-    musicScore.innerHTML = "";
+
+    // Create or get the VexFlow container
+    let vexflowContainer = musicScore.querySelector('#vexflow-container');
+    if (!vexflowContainer) {
+        vexflowContainer = document.createElement('div');
+        vexflowContainer.id = 'vexflow-container';
+        vexflowContainer.style.position = 'absolute';
+        vexflowContainer.style.top = '0';
+        vexflowContainer.style.left = '0';
+        vexflowContainer.style.width = '100%';
+        vexflowContainer.style.height = '100%';
+        vexflowContainer.style.display = 'flex';
+        vexflowContainer.style.justifyContent = 'center';
+        vexflowContainer.style.alignItems = 'center';
+        vexflowContainer.style.zIndex = '1';
+        musicScore.appendChild(vexflowContainer);
+    } else {
+        vexflowContainer.innerHTML = '';
+    }
 
     try {
+        // Get container dimensions
+        const containerWidth = musicScore.clientWidth;
+        const containerHeight = musicScore.clientHeight;
+
+        // Create a compact staff - just enough width for clef + note + time signature
+        const baseStaveWidth = 120; // Minimal width for clef, note, and time signature
+        const baseHeight = 180; // Taller height to accommodate ledger lines above and below
+
+        // Calculate scale factor to fit container while maintaining aspect ratio
+        const scaleX = (containerWidth - 40) / (baseStaveWidth + 40);
+        const scaleY = (containerHeight - 100) / baseHeight; // Leave space for controls
+        const scale = Math.min(scaleX, scaleY, 3); // Cap maximum scale at 3x
+
+        const scaledWidth = (baseStaveWidth + 40) * scale;
+        const scaledHeight = baseHeight * scale;
+
         // Create VexFlow renderer
-        const renderer = new Renderer(musicScore, Renderer.Backends.SVG);
-        renderer.resize(400, 200);
+        const renderer = new Renderer(vexflowContainer, Renderer.Backends.SVG);
+        renderer.resize(scaledWidth, scaledHeight);
         const context = renderer.getContext();
 
-        // Create a stave
-        const stave = new Stave(10, 40, 350);
+        // Apply scaling to the context
+        context.scale(scale, scale);
+
+        // Create a compact stave - center it vertically in the canvas
+        const staveY = (baseHeight - 100) / 2; // Center the staff vertically
+        const stave = new Stave(20, staveY, baseStaveWidth);
         stave.addClef(clef).addTimeSignature("1/4");
         stave.setContext(context).draw();
 
@@ -344,14 +408,14 @@ function drawNote(clef, note) {
         voice.setStrict(false); // Allow less than 4 notes
         Accidental.applyAccidentals([voice], `C`);
 
-        // Format and justify the notes to 300 pixels
-        const formatter = new Formatter().joinVoices([voice]).format([voice]);//, 300);
+        // Format and justify the notes to the compact stave
+        const formatter = new Formatter().joinVoices([voice]).format([voice], baseStaveWidth - 40);
 
         // Render voice
         voice.draw(context, stave);
     } catch (error) {
         console.error("VexFlow rendering error:", error);
-        musicScore.innerHTML = `<p style="color: red; padding: 20px;">Error rendering note: ${note} on ${clef} clef<br>Error: ${error.message}</p>`;
+        vexflowContainer.innerHTML = `<p style="color: red; padding: 20px;">Error rendering note: ${note} on ${clef} clef<br>Error: ${error.message}</p>`;
     }
 }
 

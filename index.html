@@ -3,7 +3,22 @@ layout: default
 ---
 <div class="container">
   <div class="top-row">
-    <div id="music-score" class="panel"></div>
+    <div id="music-score" class="panel">
+      <div id="floating-controls">
+        <i class="fa fa-undo" id="undo-button" title="Back"></i>
+        <i class="fa fa-refresh" id="reset-session-button" title="Reset Session"></i>
+      </div>
+      <div id="answer-controls">
+          <div id="assessment-buttons" class="hidden">
+            <button data-value="1">Hard</button>
+            <button data-value="2">Good</button>
+            <button data-value="3">Easy</button>
+          </div>
+          <div id="next-controls" class="hidden">
+            <button id="next-button">Next</button>
+          </div>
+      </div>
+    </div>
     <div class="side-panel">
       <div id="settings" class="panel">
         <i class="fa fa-music" id="settings-button"></i>
@@ -34,7 +49,6 @@ layout: default
       <div id="stats" class="panel">
         <div id="stats-widget">
             <span id="stats-display">0 / 0 (0%)</span>
-            <i class="fa fa-refresh" id="reset-session-button"></i>
         </div>
         <i class="fa fa-history" id="history-button"></i>
         <div id="feedback"></div>
@@ -46,17 +60,7 @@ layout: default
             <div id="session-history-list"></div>
         </div>
       </div>
-      <div id="controls" class="panel">
-        <i class="fa fa-undo" id="undo-button"></i>
-        <i class="fa fa-arrow-right" id="next-button"></i>
-      </div>
     </div>
-  </div>
-  <div id="self-assessment" class="hidden">
-      <button data-value="0">Wrong</button>
-      <button data-value="1">Hard</button>
-      <button data-value="2">Good</button>
-      <button data-value="3">Easy</button>
   </div>
   <div id="piano" class="panel"></div>
 </div>
