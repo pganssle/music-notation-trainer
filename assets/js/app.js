@@ -289,6 +289,7 @@ function handleGuess(note) {
 }
 
 function drawNote(clef, note) {
+    debugger;
     const musicScore = document.getElementById("music-score");
     musicScore.innerHTML = "";
     const vf = new Factory({ renderer: { elementId: 'music-score' } });
