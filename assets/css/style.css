@@ -38,10 +38,9 @@ body {
 }
 
 #feedback {
-    position: absolute;
-    right: 20px;
-    bottom: 220px;
-    font-size: 5em;
+    text-align: center;
+    font-size: 3em;
+    margin-top: 10px;
 }
 
 .panel {
@@ -164,8 +163,22 @@ body {
     display: flex;
     justify-content: space-around;
     padding: 10px;
+    margin: 10px 0;
 }
 
 #self-assessment.hidden {
     display: none;
+}
+
+#self-assessment button {
+    padding: 10px 20px;
+    margin: 0 5px;
+    cursor: pointer;
+    border: 1px solid #ccc;
+    background-color: white;
+    border-radius: 5px;
+}
+
+#self-assessment button:hover {
+    background-color: #f0f0f0;
 }

@@ -1,4 +1,5 @@
-import { Factory } from 'vexflow';
+import { Accidental, Factory, Renderer, Stave, StaveNote, Voice, Formatter } from 'vexflow';
+import 'fork-awesome/css/fork-awesome.css';
 
 const state = {
     currentUser: "default",
@@ -27,10 +28,17 @@ document.addEventListener("DOMContentLoaded", function() {
 });
 
 function init() {
+    // Initialize current session if not started
+    const user = state.users[state.currentUser];
+    if (!user.currentSession.startTime) {
+        user.currentSession.startTime = Date.now();
+    }
+
     const piano = document.getElementById("piano");
     const startNote = "B1";
     const endNote = "D6";
     createPiano(piano, startNote, endNote);
+    updateStats();
     startNewRound();
 
     const settingsModal = document.getElementById("settings-modal");
@@ -105,6 +113,12 @@ function init() {
         console.log("Next button clicked");
         startNewRound();
     });
+
+    const resetButton = document.getElementById("reset-session-button");
+    resetButton.addEventListener("click", () => {
+        resetSession();
+    });
+
 
     if ('serviceWorker' in navigator) {
         window.addEventListener('load', () => {
@@ -286,19 +300,59 @@ function handleGuess(note) {
     // Show self-assessment buttons
     const selfAssessment = document.getElementById("self-assessment");
     selfAssessment.classList.remove("hidden");
+
+    // Update stats
+    updateStats();
 }
 
 function drawNote(clef, note) {
-    debugger;
     const musicScore = document.getElementById("music-score");
     musicScore.innerHTML = "";
-    const vf = new Factory({ renderer: { elementId: 'music-score' } });
-    const score = vf.EasyScore();
-    const system = vf.System();
-    system.addStave({
-        voices: [score.voice(score.notes(`${note}/q`, { clef: clef }))]
-    }).addClef(clef).addTimeSignature('4/4');
-    vf.draw();
+
+    try {
+        // Create VexFlow renderer
+        const renderer = new Renderer(musicScore, Renderer.Backends.SVG);
+        renderer.resize(400, 200);
+        const context = renderer.getContext();
+
+        // Create a stave
+        const stave = new Stave(10, 40, 350);
+        stave.addClef(clef).addTimeSignature("1/4");
+        stave.setContext(context).draw();
+
+        // Create the note - convert format from "C4" to "c/4" for VexFlow
+        let vfNote = note.toLowerCase();
+        if (vfNote.includes('#')) {
+            vfNote = vfNote.replace('#', '#');
+        }
+        // Split note name and octave
+        const noteName = vfNote.slice(0, -1);
+        const octave = vfNote.slice(-1);
+        const vfNoteString = `${noteName}/${octave}`;
+
+        // Create notes
+        const notes = [
+            new StaveNote({
+                clef: clef,
+                keys: [vfNoteString],
+                duration: "q"
+            })
+        ];
+
+        const voice = new Voice({ num_beats: 1, beat_value: 4 });
+        voice.addTickables(notes);
+        voice.setStrict(false); // Allow less than 4 notes
+        Accidental.applyAccidentals([voice], `C`);
+
+        // Format and justify the notes to 300 pixels
+        const formatter = new Formatter().joinVoices([voice]).format([voice]);//, 300);
+
+        // Render voice
+        voice.draw(context, stave);
+    } catch (error) {
+        console.error("VexFlow rendering error:", error);
+        musicScore.innerHTML = `<p style="color: red; padding: 20px;">Error rendering note: ${note} on ${clef} clef<br>Error: ${error.message}</p>`;
+    }
 }
 
 function createPiano(pianoContainer, startNote, endNote) {
@@ -355,4 +409,37 @@ function getNoteRange(start, end) {
 
 function isBlackKey(note) {
   return note.includes("#");
+}
+
+function updateStats() {
+    const user = state.users[state.currentUser];
+    const currentGuesses = user.currentSession.guesses;
+    const total = currentGuesses.length;
+    const correct = currentGuesses.filter(guess => guess.correct).length;
+    const percentage = total > 0 ? Math.round((correct / total) * 100) : 0;
+
+    const statsDisplay = document.getElementById("stats-display");
+    statsDisplay.textContent = `${correct} / ${total} (${percentage}%)`;
+}
+
+function resetSession() {
+    const user = state.users[state.currentUser];
+
+    // Save current session to history if it has guesses
+    if (user.currentSession.guesses.length > 0) {
+        user.currentSession.endTime = Date.now();
+        user.sessionHistory.push({ ...user.currentSession });
+    }
+
+    // Start new session
+    user.currentSession = {
+        startTime: Date.now(),
+        endTime: null,
+        guesses: []
+    };
+
+    // Reset UI
+    updateStats();
+    document.getElementById("feedback").textContent = "";
+    startNewRound();
 }
