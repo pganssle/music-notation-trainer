@@ -207,21 +207,72 @@ function getPossibleNotes() {
     const settings = user.settings;
     const notes = [];
 
+    // Get the base note ranges (always using sharps for consistency)
     const bassNotes = getNoteRange(settings.bassClefRange.split('-')[0], settings.bassClefRange.split('-')[1]);
-    bassNotes.forEach(note => {
-        if (!note.includes("#") || settings.includeSharps) {
-            notes.push({ clef: "bass", note });
-        }
+    const trebleNotes = getNoteRange(settings.trebleClefRange.split('-')[0], settings.trebleClefRange.split('-')[1]);
+
+    // Helper function to get all possible note representations
+    function getNotesForSelection(baseNotes) {
+        const result = [];
+        baseNotes.forEach(note => {
+            const isAccidental = note.includes("#");
+
+            if (!isAccidental) {
+                // Natural notes are always included
+                result.push(note);
+            } else if (settings.includeSharps && settings.includeFlats) {
+                // Include both sharp and flat versions
+                result.push(note);
+                const flatEquivalent = getEnharmonicEquivalent(note);
+                if (flatEquivalent) {
+                    result.push(flatEquivalent);
+                }
+            } else if (settings.includeSharps && !settings.includeFlats) {
+                // Only sharps
+                result.push(note);
+            } else if (!settings.includeSharps && settings.includeFlats) {
+                // Only flats
+                const flatEquivalent = getEnharmonicEquivalent(note);
+                if (flatEquivalent) {
+                    result.push(flatEquivalent);
+                }
+            }
+            // If neither sharps nor flats are included, accidentals are excluded
+        });
+        return result;
+    }
+
+    // Add bass clef notes
+    getNotesForSelection(bassNotes).forEach(note => {
+        notes.push({ clef: "bass", note });
     });
 
-    const trebleNotes = getNoteRange(settings.trebleClefRange.split('-')[0], settings.trebleClefRange.split('-')[1]);
-    trebleNotes.forEach(note => {
-        if (!note.includes("#") || settings.includeSharps) {
-            notes.push({ clef: "treble", note });
-        }
+    // Add treble clef notes
+    getNotesForSelection(trebleNotes).forEach(note => {
+        notes.push({ clef: "treble", note });
     });
 
     return notes;
+}
+
+function getEnharmonicEquivalent(note) {
+    // Map sharps to their flat equivalents
+    const enharmonicMap = {
+        'C#': 'Db',
+        'D#': 'Eb',
+        'F#': 'Gb',
+        'G#': 'Ab',
+        'A#': 'Bb'
+    };
+
+    const noteName = note.slice(0, -1); // Remove octave
+    const octave = note.slice(-1);
+
+    if (enharmonicMap[noteName]) {
+        return enharmonicMap[noteName] + octave;
+    }
+
+    return null;
 }
 
 function getScoreForTime(seconds) {
@@ -394,6 +445,8 @@ function drawNote(clef, note) {
         let vfNote = note.toLowerCase();
         if (vfNote.includes('#')) {
             vfNote = vfNote.replace('#', '#');
+        } else if (vfNote.includes('b')) {
+            vfNote = vfNote.replace('b', 'b');
         }
         // Split note name and octave
         const noteName = vfNote.slice(0, -1);
@@ -478,7 +531,7 @@ function getNoteRange(start, end) {
 }
 
 function isBlackKey(note) {
-  return note.includes("#");
+  return note.includes("#") || note.includes("b");
 }
 
 function updateStats() {
