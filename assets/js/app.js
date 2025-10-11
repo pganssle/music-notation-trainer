@@ -284,6 +284,26 @@ function getEnharmonicEquivalent(note) {
     return null;
 }
 
+function getCanonicalNoteName(note) {
+    // Map flats to their sharp equivalents (canonical form used by piano keys)
+    const flatToSharpMap = {
+        'Db': 'C#',
+        'Eb': 'D#',
+        'Gb': 'F#',
+        'Ab': 'G#',
+        'Bb': 'A#'
+    };
+
+    const noteName = note.slice(0, -1); // Remove octave
+    const octave = note.slice(-1);
+
+    if (flatToSharpMap[noteName]) {
+        return flatToSharpMap[noteName] + octave;
+    }
+
+    return note; // Return original note if no mapping needed
+}
+
 function getScoreForTime(seconds) {
     if (seconds < 30) return 1;
     if (seconds < 45) return 0.9;
@@ -356,13 +376,21 @@ function selectNote(possibleNotes, weights) {
 function handleGuess(note) {
     const correctNote = state.currentNote.note;
     const key = document.querySelector(`.key[data-note="${note}"]`);
-    if (note === correctNote) {
+
+    // Check if the guess is correct (including enharmonic equivalents)
+    const isCorrect = note === correctNote || getCanonicalNoteName(note) === getCanonicalNoteName(correctNote);
+
+    if (isCorrect) {
         key.classList.add("correct");
         document.getElementById("feedback").textContent = "✅";
     } else {
         key.classList.add("incorrect");
-        const correctKey = document.querySelector(`.key[data-note="${correctNote}"]`);
-        correctKey.classList.add("correct");
+        // Use canonical note name to find the correct key (piano keys use sharp names)
+        const canonicalCorrectNote = getCanonicalNoteName(correctNote);
+        const correctKey = document.querySelector(`.key[data-note="${canonicalCorrectNote}"]`);
+        if (correctKey) {
+            correctKey.classList.add("correct");
+        }
         document.getElementById("feedback").textContent = "❌";
     }
 
@@ -372,7 +400,7 @@ function handleGuess(note) {
         guess: note,
         startTime: state.noteStartTime,
         endTime: Date.now(),
-        correct: note === correctNote,
+        correct: isCorrect,
     });
 
     // Disable keys until the next round
@@ -383,7 +411,7 @@ function handleGuess(note) {
     state.noteAnswered = true;
 
     // Show appropriate controls based on answer correctness
-    if (note === correctNote) {
+    if (isCorrect) {
         // Correct answer: show difficulty assessment buttons
         document.getElementById("assessment-buttons").classList.remove("hidden");
         document.getElementById("answer-controls").classList.remove("hidden");
