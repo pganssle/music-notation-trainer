@@ -1478,7 +1478,12 @@ function resetSession() {
     user.currentSession = {
         startTime: Date.now(),
         endTime: null,
-        guesses: []
+        guesses: [],
+        modeGuesses: {
+            keyboard: [],
+            noteName: [],
+            staffPosition: []
+        }
     };
 
     // Reset UI

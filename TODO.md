@@ -2,10 +2,10 @@
 
 ## MVP
 
-- [ ] Fix issues with "staff position notation", specifically:
-    - 1st space/line above always seems to think it is "middle line"
-    - "F" on bass clef seems to be wrong
-- [ ] Reset button is broken
+- [ ] Fix issues with the non-keyboard modes, specifically:
+    - in "staff notation mode", the "nth space above/below" seems to be off-by-one, and there are a few other broken answers
+    - At least "F" on bass clef seems to be giving the wrong answer
+- [X] Reset button is broken. Error is "Uncaught TypeError: can't access property "keyboard", user.currentSession.modeGuesses is undefined"
 
 ## Short term
 
