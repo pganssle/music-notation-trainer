@@ -36,6 +36,22 @@ const state = {
 document.addEventListener("DOMContentLoaded", function() {
     loadState();
     init();
+
+    // Lock orientation to landscape for PWA
+    if (screen.orientation && screen.orientation.lock) {
+        screen.orientation.lock('landscape').catch(err => {
+            console.log('Orientation lock failed:', err);
+        });
+    }
+
+    // Alternative method for older browsers
+    if (window.screen && window.screen.lockOrientation) {
+        window.screen.lockOrientation('landscape');
+    } else if (window.screen && window.screen.mozLockOrientation) {
+        window.screen.mozLockOrientation('landscape');
+    } else if (window.screen && window.screen.msLockOrientation) {
+        window.screen.msLockOrientation('landscape');
+    }
 });
 
 function init() {
