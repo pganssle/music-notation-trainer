@@ -349,9 +349,6 @@ function setupStaffPositionInterface() {
     };
 
     function setupButtonGroup(container, onSelect, toggleable = false) {
-        if (container === null) {
-            debugger;
-        }
         container.addEventListener('click', (e) => {
             if (e.target.classList.contains('selection-button')) {
                 if (toggleable) {
