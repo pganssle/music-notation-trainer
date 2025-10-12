@@ -234,3 +234,219 @@ body {
     color: #333;
     background-color: #f0f0f0;
 }
+
+/* Guessing interfaces */
+#guessing-interfaces {
+    width: 100%;
+    padding: 20px;
+    box-sizing: border-box;
+}
+
+.guessing-interface {
+    margin-bottom: 20px;
+    padding: 15px;
+    border: 2px solid #ddd;
+    border-radius: 8px;
+    background-color: #f9f9f9;
+}
+
+.guessing-interface h4 {
+    margin: 0 0 15px 0;
+    text-align: center;
+    font-size: 1.2em;
+    color: #333;
+}
+
+.guessing-interface.hidden {
+    display: none;
+}
+
+.guessing-interface.answered {
+    opacity: 0.6;
+    pointer-events: none;
+}
+
+/* Button-based selection interface */
+.selection-row {
+    display: flex;
+    align-items: center;
+    margin-bottom: 10px;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+.selection-label {
+    font-weight: bold;
+    min-width: 80px;
+    color: #555;
+}
+
+.selection-buttons {
+    display: flex;
+    gap: 5px;
+    flex-wrap: wrap;
+}
+
+.selection-button {
+    padding: 8px 16px;
+    border: 2px solid #007bff;
+    background-color: white;
+    color: #007bff;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 1em;
+    transition: all 0.2s ease;
+    min-width: 40px;
+    text-align: center;
+}
+
+.selection-button:hover {
+    background-color: #e7f3ff;
+}
+
+.selection-button.selected {
+    background-color: #007bff;
+    color: white;
+}
+
+.selection-button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.selection-button.correct-answer {
+    background-color: #28a745 !important;
+    color: white !important;
+    border-color: #28a745 !important;
+}
+
+.submit-button {
+    padding: 12px 20px;
+    background-color: #28a745;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 1.1em;
+    font-weight: bold;
+    margin-top: 10px;
+    transition: all 0.2s ease;
+}
+
+.submit-button:hover:not(:disabled) {
+    background-color: #218838;
+}
+
+.submit-button:disabled {
+    background-color: #ccc;
+    cursor: not-allowed;
+}
+
+.submit-arrow {
+    font-size: 1.2em;
+}
+
+/* Mode-specific answer controls overlay */
+.mode-answer-overlay {
+    position: fixed;
+    background-color: rgba(0, 0, 0, 0.4);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 100; /* Higher than VexFlow container (z-index: 1) */
+    border-radius: 8px;
+    /* Position will be set dynamically by JavaScript to cover specific interface */
+}
+
+.mode-answer-overlay.hidden {
+    display: none;
+}
+
+/* Mode-specific answer controls content - match keyboard modal styling */
+.mode-answer-overlay > div {
+    background-color: rgba(249, 249, 249, 0.95);
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    padding: 15px;
+    display: flex;
+    justify-content: center;
+}
+
+#note-name-assessment-buttons, #staff-position-assessment-buttons,
+#note-name-next-controls, #staff-position-next-controls {
+    display: flex;
+    justify-content: center;
+    gap: 15px;
+}
+
+#note-name-assessment-buttons button, #staff-position-assessment-buttons button,
+#note-name-next-controls button, #staff-position-next-controls button {
+    padding: 12px 24px;
+    cursor: pointer;
+    border: 2px solid #007bff;
+    background-color: white;
+    color: #007bff;
+    border-radius: 8px;
+    font-weight: bold;
+    font-size: 1em;
+    transition: all 0.2s ease;
+}
+
+#note-name-assessment-buttons button:hover, #staff-position-assessment-buttons button:hover,
+#note-name-next-controls button:hover, #staff-position-next-controls button:hover {
+    background-color: #007bff;
+    color: white;
+}
+
+#note-name-next-controls button, #staff-position-next-controls button {
+    background-color: #28a745;
+    border-color: #28a745;
+    color: white;
+    padding: 12px 48px;
+}
+
+#note-name-next-controls button:hover, #staff-position-next-controls button:hover {
+    background-color: #218838;
+    border-color: #1e7e34;
+}
+
+/* Mode-specific feedback indicators */
+.mode-feedback-indicator {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    font-size: 2em;
+    z-index: 10;
+    cursor: pointer;
+    background-color: rgba(255, 255, 255, 0.9);
+    border-radius: 50%;
+    width: 50px;
+    height: 50px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 2px solid #ccc;
+    transition: all 0.2s ease;
+}
+
+.mode-feedback-indicator:hover {
+    background-color: #f0f0f0;
+    transform: scale(1.1);
+}
+
+.mode-feedback-indicator.correct {
+    background-color: rgba(168, 230, 207, 0.9);
+    border-color: #28a745;
+    color: #28a745;
+}
+
+.mode-feedback-indicator.incorrect {
+    background-color: rgba(255, 138, 128, 0.9);
+    border-color: #dc3545;
+    color: #dc3545;
+}
+
+.mode-feedback-indicator.hidden {
+    display: none;
+}
