@@ -138,6 +138,10 @@ function init() {
                 document.getElementById("assessment-buttons").classList.add("hidden");
                 document.getElementById("next-controls").classList.add("hidden");
                 document.getElementById("answer-controls").classList.add("hidden");
+
+                // Reset guess interface states
+                resetNoteNameInterface();
+                resetStaffPositionInterface();
             }
         });
     } else {
@@ -264,6 +268,13 @@ function setupNoteNameInterface() {
         submitButton.disabled = !selectedNote;
     }
 
+    // Expose reset function
+    window.resetNoteNameState = function() {
+        selectedNote = '';
+        selectedAccidental = '';
+        updateSubmitButton();
+    };
+
     function setupButtonGroup(container, onSelect, toggleable = false) {
         container.addEventListener('click', (e) => {
             if (e.target.classList.contains('selection-button')) {
@@ -329,6 +340,15 @@ function setupStaffPositionInterface() {
     function updateSubmitButton() {
         submitButton.disabled = !selectedPosition || !selectedLineSpace;
     }
+
+    // Expose reset function
+    window.resetStaffPositionState = function() {
+        selectedPosition = '';
+        selectedLineSpace = '';
+        selectedAboveBelow = '';
+        selectedAccidental = '';
+        updateSubmitButton();
+    };
 
     function setupButtonGroup(container, onSelect, toggleable = false) {
         if (container === null) {
@@ -758,7 +778,10 @@ function resetNoteNameInterface() {
         btn.classList.remove('selected')
     );
 
-    document.getElementById('note-name-submit').disabled = true;
+    // Reset state variables
+    if (window.resetNoteNameState) {
+        window.resetNoteNameState();
+    }
 }
 
 function resetStaffPositionInterface() {
@@ -776,7 +799,10 @@ function resetStaffPositionInterface() {
         btn.classList.remove('selected')
     );
 
-    document.getElementById('staff-position-submit').disabled = true;
+    // Reset state variables
+    if (window.resetStaffPositionState) {
+        window.resetStaffPositionState();
+    }
 }
 
 function constructStaffPositionGuess() {
