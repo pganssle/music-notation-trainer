@@ -1324,7 +1324,7 @@ function drawNote(clef, note) {
         // Create a compact stave - center it vertically in the canvas
         const staveY = (baseHeight - 100) / 2; // Center the staff vertically
         const stave = new Stave(20, staveY, baseStaveWidth);
-        stave.addClef(clef).addTimeSignature("1/4");
+        stave.addClef(clef)
         stave.setContext(context).draw();
 
         // Create the note - convert format from "C4" to "c/4" for VexFlow
