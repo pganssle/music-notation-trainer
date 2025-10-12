@@ -257,7 +257,6 @@ body {
     width: 100%;
     padding: 20px;
     box-sizing: border-box;
-    position: relative;
 }
 
 .guessing-interface {
@@ -269,6 +268,7 @@ body {
     display: flex;
     flex-direction: column;
     gap: 0.5em;
+    position: relative;
 }
 
 .guessing-interface div.choice-row {
@@ -435,8 +435,7 @@ body {
 /* Mode-specific feedback indicators */
 .mode-feedback-indicator {
     position: absolute;
-    top: 1em;
-    right: 2em;
+    right: 1em;
     font-size: 2em;
     z-index: 10;
     cursor: pointer;
