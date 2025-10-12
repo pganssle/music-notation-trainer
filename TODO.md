@@ -2,14 +2,11 @@
 
 ## MVP
 
-- [ ] Fix issues with the non-keyboard modes, specifically:
-    - in "staff notation mode", the "nth space above/below" seems to be off-by-one, and there are a few other broken answers
-    - At least "F" on bass clef seems to be giving the wrong answer
-- [X] Reset button is broken. Error is "Uncaught TypeError: can't access property "keyboard", user.currentSession.modeGuesses is undefined"
+- [ ] Make this work as a PWA or android app
 
 ## Short term
 
-- [ ] Make it so clicking "sharp" or "flat" in note name / staff position automatically sets the other one if neither of them are locked
+- [ ] Release as an android app
 - [ ] Change "correct" and "incorrect" to the same indicators we are using in CIM
 - [ ] Fix session history display to show all three types of stats
 - [ ] Clicking the correct / incorrect indicator should allow changing difficulty assessment
@@ -24,6 +21,8 @@
     - [ ] Reposition staff within the canvas when the staff gets wider (rather than generating a canvas big enough to contain the entire staff always)
 - [ ] Try to center the note(s) on staff
 - [ ] Add solfedge support / mode
+- [ ] Ensure that no scrolling is necessary by increasing use of relative layouts
+- [ ] Try getting this looking good on a phone
 
 ## Longer term
 ### Interface improvements
