@@ -156,15 +156,7 @@ function init() {
     }
 
 
-    if ('serviceWorker' in navigator) {
-        window.addEventListener('load', () => {
-            navigator.serviceWorker.register(new URL('/sw.js', import.meta.url)).then(registration => {
-                console.log('ServiceWorker registration successful with scope: ', registration.scope);
-            }, err => {
-                console.log('ServiceWorker registration failed: ', err);
-            });
-        });
-    }
+    // Service worker registration is handled in the HTML layout
 
     // Handle assessment buttons
     const assessmentButtons = document.getElementById("assessment-buttons");

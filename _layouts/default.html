@@ -11,23 +11,23 @@
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
   <meta name="apple-mobile-web-app-title" content="Music Trainer">
-  <link rel="apple-touch-icon" href="/assets/icons/icon-192x192.png">
+  <link rel="apple-touch-icon" href="{{ '/assets/icons/icon-192x192.png' | relative_url }}">
 
   <!-- Manifest -->
-  <link rel="manifest" href="/manifest.json">
+  <link rel="manifest" href="{{ '/manifest.json' | relative_url }}">
 
   <!-- Stylesheets -->
-  <link rel="stylesheet" href="/assets/css/style.css">
+  <link rel="stylesheet" href="{{ '/assets/css/style.css' | relative_url }}">
 </head>
 <body>
   {{ content }}
-  <script src="/assets/dist/app.bundle.js"></script>
+  <script src="{{ '/assets/dist/app.bundle.js' | relative_url }}"></script>
 
   <!-- Service Worker Registration -->
   <script>
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {
-        navigator.serviceWorker.register('/sw.js')
+        navigator.serviceWorker.register('{{ "/sw.js" | relative_url }}')
           .then(registration => {
             console.log('SW registered: ', registration);
           })
