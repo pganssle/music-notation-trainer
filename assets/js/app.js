@@ -24,6 +24,7 @@ const state = {
 };
 
 document.addEventListener("DOMContentLoaded", function() {
+    loadState();
     init();
 });
 
@@ -33,6 +34,9 @@ function init() {
     if (!user.currentSession.startTime) {
         user.currentSession.startTime = Date.now();
     }
+
+    // Initialize UI from saved state
+    initializeUIFromState();
 
     const piano = document.getElementById("piano");
     const startNote = "B1";
@@ -72,13 +76,18 @@ function init() {
         createPiano(piano, "B1", "D6"); // This needs to be dynamic based on the new range
         startNewRound();
         settingsModal.style.display = "none";
+        saveState();
     });
+
+    // User management
+    setupUserManagement();
 
     const historyModal = document.getElementById("history-modal");
     const historyButton = document.getElementById("history-button");
     const historyCloseButton = historyModal.querySelector(".close-button");
 
     historyButton.addEventListener("click", () => {
+        populateSessionHistory();
         historyModal.style.display = "block";
     });
 
@@ -551,7 +560,18 @@ function resetSession() {
     // Save current session to history if it has guesses
     if (user.currentSession.guesses.length > 0) {
         user.currentSession.endTime = Date.now();
-        user.sessionHistory.push({ ...user.currentSession });
+        // Include settings information in the session record
+        const sessionRecord = {
+            ...user.currentSession,
+            settings: {
+                bassClefRange: user.settings.bassClefRange,
+                trebleClefRange: user.settings.trebleClefRange,
+                includeSharps: user.settings.includeSharps,
+                includeFlats: user.settings.includeFlats
+            }
+        };
+        user.sessionHistory.push(sessionRecord);
+        saveState(); // Save after adding to history
     }
 
     // Start new session
@@ -565,4 +585,273 @@ function resetSession() {
     updateStats();
     document.getElementById("feedback").textContent = "";
     startNewRound();
+}
+
+function populateSessionHistory() {
+    const user = state.users[state.currentUser];
+    const historyList = document.getElementById("session-history-list");
+
+    // Clear existing history
+    historyList.innerHTML = "";
+
+    if (user.sessionHistory.length === 0) {
+        const emptyMessage = document.createElement("p");
+        emptyMessage.textContent = "No session history yet. Complete some practice sessions to see your progress here!";
+        emptyMessage.style.color = "#666";
+        emptyMessage.style.fontStyle = "italic";
+        emptyMessage.style.textAlign = "center";
+        emptyMessage.style.padding = "20px";
+        historyList.appendChild(emptyMessage);
+        return;
+    }
+
+    // Sort sessions by most recent first
+    const sortedSessions = [...user.sessionHistory].sort((a, b) => b.endTime - a.endTime);
+
+    sortedSessions.forEach(session => {
+        const sessionDiv = document.createElement("div");
+        sessionDiv.classList.add("session-history-item");
+        sessionDiv.style.cssText = `
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 10px;
+            background: #f9f9f9;
+        `;
+
+        // Calculate session stats
+        const totalGuesses = session.guesses.length;
+        const correctGuesses = session.guesses.filter(guess => guess.correct).length;
+        const percentage = totalGuesses > 0 ? Math.round((correctGuesses / totalGuesses) * 100) : 0;
+
+        // Format dates
+        const startDate = new Date(session.startTime);
+        const endDate = new Date(session.endTime);
+        const duration = Math.round((session.endTime - session.startTime) / 1000 / 60); // minutes
+
+        // Get settings info (with fallback for older sessions)
+        const settings = session.settings || {
+            bassClefRange: "B1-D4",
+            trebleClefRange: "B3-D6",
+            includeSharps: true,
+            includeFlats: false
+        };
+
+        sessionDiv.innerHTML = `
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                <strong style="color: #333;">${startDate.toLocaleDateString()} ${startDate.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</strong>
+                <span style="color: ${percentage >= 80 ? '#4CAF50' : percentage >= 60 ? '#FF9800' : '#F44336'}; font-weight: bold;">
+                    ${correctGuesses}/${totalGuesses} (${percentage}%)
+                </span>
+            </div>
+            <div style="color: #666; font-size: 0.9em; margin-bottom: 8px;">
+                Duration: ${duration} minute${duration !== 1 ? 's' : ''}
+            </div>
+            <div style="color: #666; font-size: 0.9em;">
+                <div>Bass: ${settings.bassClefRange} | Treble: ${settings.trebleClefRange}</div>
+                <div>Accidentals: ${settings.includeSharps ? 'Sharps' : ''}${settings.includeSharps && settings.includeFlats ? ' & ' : ''}${settings.includeFlats ? 'Flats' : ''}${!settings.includeSharps && !settings.includeFlats ? 'None' : ''}</div>
+            </div>
+        `;
+
+        historyList.appendChild(sessionDiv);
+    });
+}
+
+function saveState() {
+    try {
+        localStorage.setItem('music-trainer-state', JSON.stringify(state));
+    } catch (error) {
+        console.error('Failed to save state to localStorage:', error);
+    }
+}
+
+function loadState() {
+    try {
+        const savedState = localStorage.getItem('music-trainer-state');
+        if (savedState) {
+            const parsedState = JSON.parse(savedState);
+            // Merge saved state with default state to handle new properties
+            Object.assign(state, parsedState);
+
+            // Ensure current user exists
+            if (!state.users[state.currentUser]) {
+                state.currentUser = "default";
+            }
+
+            // Ensure user has all required properties
+            const user = state.users[state.currentUser];
+            if (!user.settings) {
+                user.settings = {
+                    bassClefRange: "B1-D4",
+                    trebleClefRange: "B3-D6",
+                    includeSharps: true,
+                    includeFlats: false,
+                };
+            }
+            if (!user.sessionHistory) {
+                user.sessionHistory = [];
+            }
+            if (!user.currentSession) {
+                user.currentSession = {
+                    startTime: null,
+                    endTime: null,
+                    guesses: [],
+                };
+            }
+        }
+    } catch (error) {
+        console.error('Failed to load state from localStorage:', error);
+    }
+}
+
+function initializeUIFromState() {
+    // Update UI elements to reflect loaded state
+    const user = state.users[state.currentUser];
+    const settings = user.settings;
+
+    document.getElementById("bass-clef-range").value = settings.bassClefRange;
+    document.getElementById("treble-clef-range").value = settings.trebleClefRange;
+    document.getElementById("include-sharps").checked = settings.includeSharps;
+    document.getElementById("include-flats").checked = settings.includeFlats;
+
+    // Update user dropdown
+    populateUserDropdown();
+}
+
+function setupUserManagement() {
+    const addUserModal = document.getElementById("add-user-modal");
+    const addUserButton = document.getElementById("add-user-button");
+    const deleteUserButton = document.getElementById("delete-user-button");
+    const createUserButton = document.getElementById("create-user-button");
+    const cancelUserButton = document.getElementById("cancel-user-button");
+    const currentUserSelect = document.getElementById("current-user-select");
+    const newUserNameInput = document.getElementById("new-user-name");
+
+    // Show add user modal
+    addUserButton.addEventListener("click", () => {
+        newUserNameInput.value = "";
+        addUserModal.style.display = "block";
+    });
+
+    // Cancel adding user
+    cancelUserButton.addEventListener("click", () => {
+        addUserModal.style.display = "none";
+    });
+
+    // Close modal when clicking X
+    addUserModal.querySelector(".close-button").addEventListener("click", () => {
+        addUserModal.style.display = "none";
+    });
+
+    // Close modal when clicking outside
+    window.addEventListener("click", (event) => {
+        if (event.target === addUserModal) {
+            addUserModal.style.display = "none";
+        }
+    });
+
+    // Create new user
+    createUserButton.addEventListener("click", () => {
+        const userName = newUserNameInput.value.trim();
+        if (!userName) {
+            alert("Please enter a user name.");
+            return;
+        }
+
+        if (state.users[userName]) {
+            alert("A user with this name already exists.");
+            return;
+        }
+
+        // Create new user
+        state.users[userName] = {
+            settings: {
+                bassClefRange: "B1-D4",
+                trebleClefRange: "B3-D6",
+                includeSharps: true,
+                includeFlats: false,
+            },
+            sessionHistory: [],
+            currentSession: {
+                startTime: null,
+                endTime: null,
+                guesses: [],
+            }
+        };
+
+        // Switch to new user
+        state.currentUser = userName;
+        saveState();
+
+        // Update UI
+        populateUserDropdown();
+        initializeUIFromState();
+        updateStats();
+        startNewRound();
+
+        addUserModal.style.display = "none";
+        alert(`User "${userName}" created and selected.`);
+    });
+
+    // Switch user
+    currentUserSelect.addEventListener("change", (event) => {
+        const newUser = event.target.value;
+        if (newUser !== state.currentUser) {
+            state.currentUser = newUser;
+            saveState();
+
+            // Update UI for new user
+            initializeUIFromState();
+            updateStats();
+            startNewRound();
+        }
+    });
+
+    // Delete user
+    deleteUserButton.addEventListener("click", () => {
+        if (state.currentUser === "default") {
+            alert("Cannot delete the default user.");
+            return;
+        }
+
+        if (Object.keys(state.users).length <= 1) {
+            alert("Cannot delete the last user.");
+            return;
+        }
+
+        if (confirm(`Are you sure you want to delete user "${state.currentUser}"? This will permanently delete all their session history.`)) {
+            delete state.users[state.currentUser];
+
+            // Switch to default user
+            state.currentUser = "default";
+            saveState();
+
+            // Update UI
+            populateUserDropdown();
+            initializeUIFromState();
+            updateStats();
+            startNewRound();
+
+            alert("User deleted successfully.");
+        }
+    });
+}
+
+function populateUserDropdown() {
+    const select = document.getElementById("current-user-select");
+    const currentUser = state.currentUser;
+
+    // Clear existing options
+    select.innerHTML = "";
+
+    // Add all users
+    Object.keys(state.users).forEach(userName => {
+        const option = document.createElement("option");
+        option.value = userName;
+        option.textContent = userName === "default" ? "Default User" : userName;
+        if (userName === currentUser) {
+            option.selected = true;
+        }
+        select.appendChild(option);
+    });
 }

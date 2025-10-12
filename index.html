@@ -28,6 +28,14 @@ layout: default
           <span class="close-button">&times;</span>
           <h2>Settings</h2>
           <div class="setting">
+            <label for="current-user">Current User:</label>
+            <select id="current-user-select">
+              <option value="default">Default User</option>
+            </select>
+            <button id="add-user-button" type="button">Add User</button>
+            <button id="delete-user-button" type="button">Delete User</button>
+          </div>
+          <div class="setting">
             <label for="bass-clef-range">Bass Clef Range:</label>
             <input type="text" id="bass-clef-range" value="B1-D4">
           </div>
@@ -63,4 +71,18 @@ layout: default
     </div>
   </div>
   <div id="piano" class="panel"></div>
+
+  <!-- Add User Modal -->
+  <div id="add-user-modal" class="modal">
+    <div class="modal-content">
+      <span class="close-button">&times;</span>
+      <h2>Add New User</h2>
+      <div class="setting">
+        <label for="new-user-name">User Name:</label>
+        <input type="text" id="new-user-name" placeholder="Enter user name">
+      </div>
+      <button id="create-user-button">Create User</button>
+      <button id="cancel-user-button">Cancel</button>
+    </div>
+  </div>
 </div>
