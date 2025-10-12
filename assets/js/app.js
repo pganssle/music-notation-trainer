@@ -787,90 +787,14 @@ function constructStaffPositionGuess() {
 
     if (!position || !lineSpace) return null;
 
-    // Convert staff position to note name based on clef
-    const clef = state.currentNote.clef;
-    const octave = state.currentNote.note.slice(-1);
-
-    let noteName = getStaffPositionNote(clef, position, lineSpace, aboveBelow);
-    if (!noteName) return null;
-
-    return noteName + accidental + octave;
-}
-
-function getStaffPositionNote(clef, position, lineSpace, aboveBelow) {
-    // Map staff positions to note names for treble and bass clef
-    const treblePositions = {
-        // On staff (bottom to top: bottom line, bottom space, second line, second space, middle line, middle space, fourth line, top space, top line)
-        'bottom_line': 'E',
-        'bottom_space': 'F',
-        '2nd_line': 'G',
-        '2nd_space': 'A',
-        'middle_line': 'B',
-        'middle_space': 'C',
-        '4th_line': 'D',
-        'top_space': 'E',
-        'top_line': 'F',
-        // Below staff
-        '1st_space_below': 'D',
-        '1st_line_below': 'C',
-        '2nd_space_below': 'B',
-        '2nd_line_below': 'A',
-        '3rd_space_below': 'G',
-        '3rd_line_below': 'F',
-        '4th_space_below': 'E',
-        '4th_line_below': 'D',
-        // Above staff
-        '1st_line_above': 'G',
-        '1st_space_above': 'A',
-        '2nd_line_above': 'B',
-        '2nd_space_above': 'C',
-        '3rd_line_above': 'D',
-        '3rd_space_above': 'E',
-        '4th_line_above': 'F',
-        '4th_space_above': 'G'
+    // Instead of guessing the note name, compare the staff position directly
+    // This returns a staff position object that can be compared with the correct answer
+    return {
+        position: position,
+        lineSpace: lineSpace,
+        aboveBelow: aboveBelow,
+        accidental: accidental
     };
-
-    const bassPositions = {
-        // On staff (bottom to top: bottom line, bottom space, second line, second space, middle line, middle space, fourth line, top space, top line)
-        'bottom_line': 'G',
-        'bottom_space': 'A',
-        '2nd_line': 'B',
-        '2nd_space': 'C',
-        'middle_line': 'D',
-        'middle_space': 'E',
-        '4th_line': 'F',
-        'top_space': 'G',
-        'top_line': 'A',
-        // Below staff
-        '1st_space_below': 'F',
-        '1st_line_below': 'E',
-        '2nd_space_below': 'D',
-        '2nd_line_below': 'C',
-        '3rd_space_below': 'B',
-        '3rd_line_below': 'A',
-        '4th_space_below': 'G',
-        '4th_line_below': 'F',
-        // Above staff
-        '1st_line_above': 'B',
-        '1st_space_above': 'C',
-        '2nd_line_above': 'D',
-        '2nd_space_above': 'E',
-        '3rd_line_above': 'F',
-        '3rd_space_above': 'G',
-        '4th_line_above': 'A',
-        '4th_space_above': 'B'
-    };
-
-    // Construct key for lookup
-    let key;
-    if (aboveBelow) {
-        key = `${position}_${lineSpace}_${aboveBelow}`;
-    } else {
-        key = `${position}_${lineSpace}`;
-    }
-
-    const positions = clef === 'treble' ? treblePositions : bassPositions;
-    return positions[key] || null;
 }
 
 function getScoreForTime(seconds) {
@@ -964,14 +888,29 @@ function selectNote(possibleNotes, weights) {
     return possibleNotes[possibleNotes.length - 1];
 }
 
-function handleGuess(note, mode = 'keyboard') {
+function handleGuess(noteOrStaffPosition, mode = 'keyboard') {
     const correctNote = state.currentNote.note;
+    let isCorrect = false;
 
-    // Check if the guess is correct (including enharmonic equivalents)
-    const isCorrect = note === correctNote || getCanonicalNoteName(note) === getCanonicalNoteName(correctNote);
+    if (mode === 'staffPosition') {
+        // Handle staff position guess - compare staff position objects
+        const clef = state.currentNote.clef;
+        const correctStaffPosition = getNoteStaffPosition(clef, correctNote);
+
+        console.log(`Staff position validation for ${correctNote} on ${clef} clef:`);
+        console.log('User guess:', noteOrStaffPosition);
+        console.log('Correct position:', correctStaffPosition);
+
+        isCorrect = compareNoteStaffPositions(noteOrStaffPosition, correctStaffPosition);
+    } else {
+        // Handle note name guess (original logic)
+        const note = noteOrStaffPosition;
+        isCorrect = note === correctNote || getCanonicalNoteName(note) === getCanonicalNoteName(correctNote);
+    }
 
     // Update UI feedback based on mode
     if (mode === 'keyboard') {
+        const note = noteOrStaffPosition; // For keyboard mode, it's still a note string
         const key = document.querySelector(`.key[data-note="${note}"]`);
         if (isCorrect) {
             key.classList.add("correct");
@@ -998,7 +937,7 @@ function handleGuess(note, mode = 'keyboard') {
     // Record the guess in both legacy and mode-specific arrays
     const guessData = {
         note: state.currentNote,
-        guess: note,
+        guess: noteOrStaffPosition,
         mode: mode,
         startTime: state.noteStartTime,
         endTime: Date.now(),
@@ -1013,7 +952,7 @@ function handleGuess(note, mode = 'keyboard') {
 
     // Track this guess for the current note
     state.currentNoteGuesses[mode] = {
-        guess: note,
+        guess: noteOrStaffPosition,
         correct: isCorrect,
         hasRating: false
     };
@@ -1242,47 +1181,95 @@ function showCorrectStaffPositionAnswer(correctNote) {
     }
 }
 
-function getNoteStaffPosition(clef, note) {
-    // Parse note to get base note and accidental
-    const noteName = note.slice(0, -1).replace(/[#b]/, ''); // Remove octave and accidental
+// Diatonic absolute indexing system
+// Based on natural notes: C0=0, D0=1, E0=2, F0=3, G0=4, A0=5, B0=6, C1=7, etc.
+// Accidentals are handled separately
+function noteToDiatonicIndex(note) {
+    const naturalNotes = ["C", "D", "E", "F", "G", "A", "B"];
+    const octave = parseInt(note.slice(-1));
+    const noteName = note.slice(0, -1).replace(/[#b]/, ''); // Remove accidental
     const accidental = note.includes('#') ? '#' : note.includes('b') ? 'b' : '';
 
-    // Reverse lookup from note to staff position
-    const treblePositions = {
-        'E': { position: 'bottom', lineSpace: 'line' },
-        'F': { position: 'bottom', lineSpace: 'space' },
-        'G': { position: '2nd', lineSpace: 'line' },
-        'A': { position: '2nd', lineSpace: 'space' },
-        'B': { position: 'middle', lineSpace: 'line' },
-        'C': { position: 'middle', lineSpace: 'space' },
-        'D': { position: '4th', lineSpace: 'line' },
-        // Note: this is simplified - would need to handle ledger lines above/below
+    const noteIndex = naturalNotes.indexOf(noteName);
+    if (noteIndex === -1) return null;
+
+    return {
+        diatonicIndex: octave * 7 + noteIndex,
+        accidental: accidental
+    };
+}
+
+function diatonicIndexToNote(diatonicIndex, accidental = '') {
+    const naturalNotes = ["C", "D", "E", "F", "G", "A", "B"];
+    const octave = Math.floor(diatonicIndex / 7);
+    const noteIndex = diatonicIndex % 7;
+
+    return naturalNotes[noteIndex] + accidental + octave;
+}
+
+function getStaffPositionFromDiatonicIndex(clef, diatonicIndex, accidental = '') {
+    // Define reference positions for each clef (diatonic index of bottom line)
+    const clefReferences = {
+        treble: 30, // E4 = (4 * 7) + 2 = 30 (E is index 2 in natural notes)
+        bass: 18   // G2 = (2 * 7) + 4 = 18 (G is index 4 in natural notes)
     };
 
-    const bassPositions = {
-        'G': { position: 'bottom', lineSpace: 'line' },
-        'A': { position: 'bottom', lineSpace: 'space' },
-        'B': { position: '2nd', lineSpace: 'line' },
-        'C': { position: '2nd', lineSpace: 'space' },
-        'D': { position: 'middle', lineSpace: 'line' },
-        'E': { position: 'middle', lineSpace: 'space' },
-        'F': { position: '4th', lineSpace: 'line' },
-        // Note: this is simplified - would need to handle ledger lines above/below
-    };
+    const referenceIndex = clefReferences[clef];
+    const staffPosition = diatonicIndex - referenceIndex;
 
-    const positions = clef === 'treble' ? treblePositions : bassPositions;
-    const staffPos = positions[noteName];
+    console.log(`Calculating position: diatonicIndex=${diatonicIndex}, reference=${referenceIndex}, staffPosition=${staffPosition}`);
 
-    if (staffPos) {
-        return {
-            position: staffPos.position,
-            lineSpace: staffPos.lineSpace,
-            aboveBelow: '', // Simplified - not handling ledger lines for now
-            accidental: accidental
-        };
+    // Staff position names and types (0 = bottom line)
+    const positionNames = [
+        "bottom",
+        "bottom",
+        "2nd",
+        "2nd",
+        "middle",
+        "middle",
+        "4th",
+        "top",
+        "top"
+    ];
+    const ordinalText = ['0th', '1st', '2nd', '3rd', '4th'];
+
+
+    let aboveBelow = '';
+    let lineSpace = (diatonicIndex % 2 === 0) ? 'line' : 'space';
+    let position;
+
+    if (staffPosition < 0 || staffPosition > positionNames.length) {
+        let count;
+        if (staffPosition > positionNames.length) {
+            aboveBelow = 'above';
+            count = staffPosition - positionNames.length + 1;
+        } else {
+            aboveBelow = 'below';
+            count = Math.abs(staffPosition);
+        }
+        position = ordinalText[Math.ceil(count / 2)];
+    } else {
+        position = positionNames[staffPosition];
     }
 
-    return null;
+    return { position, lineSpace, aboveBelow, accidental };
+}
+
+function getNoteStaffPosition(clef, note) {
+    // Use the new diatonic indexing system for accurate positioning
+    const diatonicData = noteToDiatonicIndex(note);
+    if (diatonicData === null) return null;
+
+    return getStaffPositionFromDiatonicIndex(clef, diatonicData.diatonicIndex, diatonicData.accidental);
+}
+
+function compareNoteStaffPositions(position1, position2) {
+    return (
+        position1.position == position2.position &&
+        position1.lineSpace == position2.lineSpace &&
+        position1.aboveBelow == position2.aboveBelow &&
+        position1.accidental == position2.accidental
+    );
 }
 
 function drawNote(clef, note) {
