@@ -109,6 +109,7 @@ function init() {
                 document.getElementById("feedback").textContent = "";
                 document.getElementById("assessment-buttons").classList.add("hidden");
                 document.getElementById("next-controls").classList.add("hidden");
+                document.getElementById("answer-controls").classList.add("hidden");
             }
         });
     } else {
@@ -147,6 +148,7 @@ function init() {
                     lastGuess.selfAssessment = value;
                 }
                 assessmentButtons.classList.add("hidden");
+                document.getElementById("answer-controls").classList.add("hidden");
                 startNewRound();
             }
         });
@@ -161,6 +163,7 @@ function init() {
     if (nextButton) {
         nextButton.addEventListener("click", () => {
             document.getElementById("next-controls").classList.add("hidden");
+            document.getElementById("answer-controls").classList.add("hidden");
             startNewRound();
         });
     } else {
@@ -179,6 +182,7 @@ function startNewRound() {
     // Hide all answer controls
     document.getElementById("assessment-buttons").classList.add("hidden");
     document.getElementById("next-controls").classList.add("hidden");
+    document.getElementById("answer-controls").classList.add("hidden");
 
 
     state.previousNote = state.currentNote;
@@ -322,9 +326,11 @@ function handleGuess(note) {
     if (note === correctNote) {
         // Correct answer: show difficulty assessment buttons
         document.getElementById("assessment-buttons").classList.remove("hidden");
+        document.getElementById("answer-controls").classList.remove("hidden");
     } else {
         // Wrong answer: show only next button
         document.getElementById("next-controls").classList.remove("hidden");
+        document.getElementById("answer-controls").classList.remove("hidden");
     }
 
     // Update stats
