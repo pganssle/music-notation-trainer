@@ -275,6 +275,12 @@ function setupNoteNameInterface() {
         updateSubmitButton();
     };
 
+    // Expose setter for accidental (for syncing)
+    window.setNoteNameAccidental = function(value) {
+        selectedAccidental = value;
+        updateSubmitButton();
+    };
+
     function setupButtonGroup(container, onSelect, toggleable = false) {
         container.addEventListener('click', (e) => {
             if (e.target.classList.contains('selection-button')) {
@@ -312,6 +318,9 @@ function setupNoteNameInterface() {
     setupButtonGroup(accidentalButtons, (value) => {
         selectedAccidental = value;
         updateSubmitButton();
+
+        // Auto-set staff position accidental if neither mode is locked
+        syncAccidentalToStaffPosition(value);
     }, true); // Make accidental buttons toggleable
 
     submitButton.addEventListener('click', () => {
@@ -347,6 +356,12 @@ function setupStaffPositionInterface() {
         selectedLineSpace = '';
         selectedAboveBelow = '';
         selectedAccidental = '';
+        updateSubmitButton();
+    };
+
+    // Expose setter for accidental (for syncing)
+    window.setStaffPositionAccidental = function(value) {
+        selectedAccidental = value;
         updateSubmitButton();
     };
 
@@ -397,6 +412,9 @@ function setupStaffPositionInterface() {
     setupButtonGroup(accidentalButtons, (value) => {
         selectedAccidental = value;
         updateSubmitButton();
+
+        // Auto-set note name accidental if neither mode is locked
+        syncAccidentalToNoteName(value);
     }, true); // Make accidental buttons toggleable
 
     submitButton.addEventListener('click', () => {
@@ -1805,4 +1823,67 @@ function populateUserDropdown() {
         }
         select.appendChild(option);
     });
+}
+
+function isModeLockedForCurrentNote(mode) {
+    // A mode is locked if a guess has been submitted for it for the current note
+    return state.currentNoteGuesses[mode] !== undefined;
+}
+
+function syncAccidentalToStaffPosition(accidentalValue) {
+    // Only sync if staff position mode is active and not locked
+    const activeModes = getActiveModes();
+    if (!activeModes.includes('staffPosition') || isModeLockedForCurrentNote('staffPosition')) {
+        return;
+    }
+
+    // Set the accidental in staff position interface
+    const staffAccidentalButtons = document.getElementById('staff-accidental-buttons');
+
+    // First clear all selected accidentals in staff position
+    staffAccidentalButtons.querySelectorAll('.selection-button').forEach(btn => {
+        btn.classList.remove('selected');
+    });
+
+    // Then select the matching accidental if one was provided
+    if (accidentalValue) {
+        const matchingButton = staffAccidentalButtons.querySelector(`[data-value="${accidentalValue}"]`);
+        if (matchingButton) {
+            matchingButton.classList.add('selected');
+        }
+    }
+
+    // Update the internal state variable
+    if (window.setStaffPositionAccidental) {
+        window.setStaffPositionAccidental(accidentalValue);
+    }
+}
+
+function syncAccidentalToNoteName(accidentalValue) {
+    // Only sync if note name mode is active and not locked
+    const activeModes = getActiveModes();
+    if (!activeModes.includes('noteName') || isModeLockedForCurrentNote('noteName')) {
+        return;
+    }
+
+    // Set the accidental in note name interface
+    const noteAccidentalButtons = document.getElementById('accidental-buttons');
+
+    // First clear all selected accidentals in note name
+    noteAccidentalButtons.querySelectorAll('.selection-button').forEach(btn => {
+        btn.classList.remove('selected');
+    });
+
+    // Then select the matching accidental if one was provided
+    if (accidentalValue) {
+        const matchingButton = noteAccidentalButtons.querySelector(`[data-value="${accidentalValue}"]`);
+        if (matchingButton) {
+            matchingButton.classList.add('selected');
+        }
+    }
+
+    // Update the internal state variable
+    if (window.setNoteNameAccidental) {
+        window.setNoteNameAccidental(accidentalValue);
+    }
 }
