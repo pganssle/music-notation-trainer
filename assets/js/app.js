@@ -1046,6 +1046,10 @@ function handleGuess(noteOrStaffPosition, mode = 'keyboard') {
                     assessmentButtons.classList.remove('hidden');
                     overlay.classList.remove('hidden');
                 }
+            } else if (mode === 'keyboard') {
+                // For keyboard mode, show main assessment buttons since it doesn't have a mode-specific overlay
+                document.getElementById("assessment-buttons").classList.remove("hidden");
+                document.getElementById("answer-controls").classList.remove("hidden");
             }
         } else {
             // Show correct answer for wrong guesses
