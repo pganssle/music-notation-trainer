@@ -11,7 +11,9 @@ body {
 
 .top-row {
   display: flex;
-  flex: 1;
+  flex-shrink: 1;
+  flex-grow: 5;
+  flex-basis: 0%;
 }
 
 #music-score {
@@ -19,6 +21,7 @@ body {
   border: 1px solid #ccc;
   position: relative;
   display: flex;
+  flex-direction: column;
   justify-content: center;
   align-items: center;
 }
@@ -36,9 +39,16 @@ body {
   padding: 10px;
 }
 
+#piano-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-grow: 0;
+    min-height: 205px;
+}
+
 #piano {
   height: 200px;
-  border: 1px solid #ccc;
 }
 
 #feedback {
@@ -82,7 +92,7 @@ body {
 .middle-c::after {
     content: '•';
     position: absolute;
-    bottom: 5px;
+    bottom: 15%;
     left: 50%;
     transform: translateX(-50%);
     font-size: 20px;
@@ -122,9 +132,8 @@ body {
 }
 
 .close-button {
-    color: #aaa;
-    float: right;
-    font-size: 28px;
+    color: #000;
+    font-size: 2em;
     font-weight: bold;
 }
 
@@ -150,6 +159,14 @@ body {
 #history-button {
     font-size: 2em;
     margin-top: 10px;
+}
+
+#vexflow-container {
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 200px;
 }
 
 
@@ -240,6 +257,7 @@ body {
     width: 100%;
     padding: 20px;
     box-sizing: border-box;
+    position: relative;
 }
 
 .guessing-interface {
@@ -248,13 +266,16 @@ body {
     border: 2px solid #ddd;
     border-radius: 8px;
     background-color: #f9f9f9;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5em;
 }
 
-.guessing-interface h4 {
-    margin: 0 0 15px 0;
-    text-align: center;
-    font-size: 1.2em;
-    color: #333;
+.guessing-interface div.choice-row {
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    gap: 2em;
 }
 
 .guessing-interface.hidden {
@@ -270,7 +291,6 @@ body {
 .selection-row {
     display: flex;
     align-items: center;
-    margin-bottom: 10px;
     flex-wrap: wrap;
     gap: 10px;
 }
@@ -327,9 +347,8 @@ body {
     border: none;
     border-radius: 6px;
     cursor: pointer;
-    font-size: 1.1em;
+    font-size: 1em;
     font-weight: bold;
-    margin-top: 10px;
     transition: all 0.2s ease;
 }
 
@@ -343,7 +362,7 @@ body {
 }
 
 .submit-arrow {
-    font-size: 1.2em;
+    font-size: 1em;
 }
 
 /* Mode-specific answer controls overlay */
@@ -377,7 +396,9 @@ body {
 #note-name-next-controls, #staff-position-next-controls {
     display: flex;
     justify-content: center;
+    align-items: center;
     gap: 15px;
+    padding: 1em;
 }
 
 #note-name-assessment-buttons button, #staff-position-assessment-buttons button,
@@ -414,37 +435,20 @@ body {
 /* Mode-specific feedback indicators */
 .mode-feedback-indicator {
     position: absolute;
-    top: 10px;
-    right: 10px;
+    top: 1em;
+    right: 2em;
     font-size: 2em;
     z-index: 10;
     cursor: pointer;
-    background-color: rgba(255, 255, 255, 0.9);
-    border-radius: 50%;
-    width: 50px;
-    height: 50px;
     display: flex;
     align-items: center;
     justify-content: center;
-    border: 2px solid #ccc;
     transition: all 0.2s ease;
 }
 
 .mode-feedback-indicator:hover {
     background-color: #f0f0f0;
     transform: scale(1.1);
-}
-
-.mode-feedback-indicator.correct {
-    background-color: rgba(168, 230, 207, 0.9);
-    border-color: #28a745;
-    color: #28a745;
-}
-
-.mode-feedback-indicator.incorrect {
-    background-color: rgba(255, 138, 128, 0.9);
-    border-color: #dc3545;
-    color: #dc3545;
 }
 
 .mode-feedback-indicator.hidden {
