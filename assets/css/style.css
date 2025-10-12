@@ -168,6 +168,10 @@ body {
     z-index: 5;
 }
 
+#answer-controls.hidden {
+    display: none;
+}
+
 #assessment-buttons, #next-controls {
     display: flex;
     justify-content: center;
