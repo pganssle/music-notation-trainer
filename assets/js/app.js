@@ -331,6 +331,9 @@ function setupStaffPositionInterface() {
     }
 
     function setupButtonGroup(container, onSelect, toggleable = false) {
+        if (container === null) {
+            debugger;
+        }
         container.addEventListener('click', (e) => {
             if (e.target.classList.contains('selection-button')) {
                 if (toggleable) {
@@ -800,11 +803,11 @@ function getStaffPositionNote(clef, position, lineSpace, aboveBelow) {
         // On staff (bottom to top: bottom line, bottom space, second line, second space, middle line, middle space, fourth line, top space, top line)
         'bottom_line': 'E',
         'bottom_space': 'F',
-        'second_line': 'G',
-        'second_space': 'A',
+        '2nd_line': 'G',
+        '2nd_space': 'A',
         'middle_line': 'B',
         'middle_space': 'C',
-        'fourth_line': 'D',
+        '4th_line': 'D',
         'top_space': 'E',
         'top_line': 'F',
         // Below staff
@@ -831,11 +834,11 @@ function getStaffPositionNote(clef, position, lineSpace, aboveBelow) {
         // On staff (bottom to top: bottom line, bottom space, second line, second space, middle line, middle space, fourth line, top space, top line)
         'bottom_line': 'G',
         'bottom_space': 'A',
-        'second_line': 'B',
-        'second_space': 'C',
+        '2nd_line': 'B',
+        '2nd_space': 'C',
         'middle_line': 'D',
         'middle_space': 'E',
-        'fourth_line': 'F',
+        '4th_line': 'F',
         'top_space': 'G',
         'top_line': 'A',
         // Below staff
@@ -1248,22 +1251,22 @@ function getNoteStaffPosition(clef, note) {
     const treblePositions = {
         'E': { position: 'bottom', lineSpace: 'line' },
         'F': { position: 'bottom', lineSpace: 'space' },
-        'G': { position: 'second', lineSpace: 'line' },
-        'A': { position: 'second', lineSpace: 'space' },
+        'G': { position: '2nd', lineSpace: 'line' },
+        'A': { position: '2nd', lineSpace: 'space' },
         'B': { position: 'middle', lineSpace: 'line' },
         'C': { position: 'middle', lineSpace: 'space' },
-        'D': { position: 'fourth', lineSpace: 'line' },
+        'D': { position: '4th', lineSpace: 'line' },
         // Note: this is simplified - would need to handle ledger lines above/below
     };
 
     const bassPositions = {
         'G': { position: 'bottom', lineSpace: 'line' },
         'A': { position: 'bottom', lineSpace: 'space' },
-        'B': { position: 'second', lineSpace: 'line' },
-        'C': { position: 'second', lineSpace: 'space' },
+        'B': { position: '2nd', lineSpace: 'line' },
+        'C': { position: '2nd', lineSpace: 'space' },
         'D': { position: 'middle', lineSpace: 'line' },
         'E': { position: 'middle', lineSpace: 'space' },
-        'F': { position: 'fourth', lineSpace: 'line' },
+        'F': { position: '4th', lineSpace: 'line' },
         // Note: this is simplified - would need to handle ledger lines above/below
     };
 
@@ -1290,13 +1293,6 @@ function drawNote(clef, note) {
     if (!vexflowContainer) {
         vexflowContainer = document.createElement('div');
         vexflowContainer.id = 'vexflow-container';
-        vexflowContainer.style.width = '100%';
-        vexflowContainer.style.flex = '1';
-        vexflowContainer.style.display = 'flex';
-        vexflowContainer.style.justifyContent = 'center';
-        vexflowContainer.style.alignItems = 'center';
-        vexflowContainer.style.minHeight = '200px';
-        vexflowContainer.style.zIndex = '1'; // Lower z-index than modals
         // Insert as first child so it appears above the guessing interfaces
         musicScore.insertBefore(vexflowContainer, musicScore.firstChild);
     } else {
@@ -1351,17 +1347,18 @@ function drawNote(clef, note) {
             new StaveNote({
                 clef: clef,
                 keys: [vfNoteString],
-                duration: "q"
+                duration: "q",
+                align_center: true,
             })
         ];
 
-        const voice = new Voice({ num_beats: 1, beat_value: 4 });
+        const voice = new Voice({ num_beats: 1, beat_value: 1 });
         voice.addTickables(notes);
         voice.setStrict(false); // Allow less than 4 notes
         Accidental.applyAccidentals([voice], `C`);
 
         // Format and justify the notes to the compact stave
-        const formatter = new Formatter().joinVoices([voice]).format([voice], baseStaveWidth - 40);
+        const formatter = new Formatter().joinVoices([voice]).format([voice], baseStaveWidth - 140);
 
         // Render voice
         voice.draw(context, stave);

@@ -12,76 +12,70 @@ layout: default
         <!-- Note Name Guessing Interface -->
         <div id="note-name-interface" class="guessing-interface hidden">
           <div class="mode-feedback-indicator hidden" id="note-name-feedback"></div>
-          <h4>Note Name</h4>
-          <div class="selection-row">
-            <span class="selection-label">Note:</span>
-            <div class="selection-buttons" id="note-letter-buttons">
-              <button class="selection-button" data-value="C">C</button>
-              <button class="selection-button" data-value="D">D</button>
-              <button class="selection-button" data-value="E">E</button>
-              <button class="selection-button" data-value="F">F</button>
-              <button class="selection-button" data-value="G">G</button>
-              <button class="selection-button" data-value="A">A</button>
-              <button class="selection-button" data-value="B">B</button>
+          <div class="choice-row">
+              <div class="selection-row">
+                <div class="selection-buttons" id="note-letter-buttons">
+                  <button class="selection-button" data-value="C">C</button>
+                  <button class="selection-button" data-value="D">D</button>
+                  <button class="selection-button" data-value="E">E</button>
+                  <button class="selection-button" data-value="F">F</button>
+                  <button class="selection-button" data-value="G">G</button>
+                  <button class="selection-button" data-value="A">A</button>
+                  <button class="selection-button" data-value="B">B</button>
+                </div>
+              </div>
+              <div class="selection-row">
+                <div class="selection-buttons" id="accidental-buttons">
+                  <button class="selection-button" data-value="#">Sharp</button>
+                  <button class="selection-button" data-value="b">Flat</button>
+                </div>
+              </div>
+              <div style="text-align: center;">
+                <button id="note-name-submit" class="submit-button" disabled>
+                  <span class="submit-arrow">→</span>
+                </button>
+              </div>
             </div>
-          </div>
-          <div class="selection-row">
-            <span class="selection-label">Accidental:</span>
-            <div class="selection-buttons" id="accidental-buttons">
-              <button class="selection-button" data-value="#">Sharp</button>
-              <button class="selection-button" data-value="b">Flat</button>
-            </div>
-          </div>
-          <div style="text-align: center;">
-            <button id="note-name-submit" class="submit-button" disabled>
-              <span class="submit-arrow">→</span>
-            </button>
-          </div>
         </div>
 
         <!-- Staff Position Guessing Interface -->
         <div id="staff-position-interface" class="guessing-interface hidden">
           <div class="mode-feedback-indicator hidden" id="staff-position-feedback"></div>
-          <h4>Staff Position</h4>
-          <div class="selection-row">
-            <span class="selection-label">Position:</span>
-            <div class="selection-buttons" id="position-buttons">
-              <button class="selection-button" data-value="1st">1st</button>
-              <button class="selection-button" data-value="2nd">2nd</button>
-              <button class="selection-button" data-value="3rd">3rd</button>
-              <button class="selection-button" data-value="4th">4th</button>
-              <button class="selection-button" data-value="bottom">Bottom</button>
-              <button class="selection-button" data-value="second">Second</button>
-              <button class="selection-button" data-value="middle">Middle</button>
-              <button class="selection-button" data-value="fourth">Fourth</button>
-              <button class="selection-button" data-value="top">Top</button>
+          <div class="choice-row">
+              <div class="selection-row">
+                <div class="selection-buttons" id="position-buttons">
+                  <button class="selection-button" data-value="1st">1st</button>
+                  <button class="selection-button" data-value="2nd">2nd</button>
+                  <button class="selection-button" data-value="3rd">3rd</button>
+                  <button class="selection-button" data-value="4th">4th</button>
+                  <button class="selection-button" data-value="bottom">Bottom</button>
+                  <button class="selection-button" data-value="middle">Middle</button>
+                  <button class="selection-button" data-value="top">Top</button>
+                </div>
+              </div>
+              <div class="selection-row" id="line-space-buttons">
+                  <button class="selection-button" data-value="line">Line</button>
+                  <button class="selection-button" data-value="space">Space</button>
             </div>
           </div>
-          <div class="selection-row">
-            <span class="selection-label">Type:</span>
-            <div class="selection-buttons" id="line-space-buttons">
-              <button class="selection-button" data-value="line">Line</button>
-              <button class="selection-button" data-value="space">Space</button>
-            </div>
-          </div>
-          <div class="selection-row">
-            <span class="selection-label">Location:</span>
-            <div class="selection-buttons" id="above-below-buttons">
-              <button class="selection-button" data-value="above">Above</button>
-              <button class="selection-button" data-value="below">Below</button>
-            </div>
-          </div>
-          <div class="selection-row">
-            <span class="selection-label">Accidental:</span>
-            <div class="selection-buttons" id="staff-accidental-buttons">
-              <button class="selection-button" data-value="#">Sharp</button>
-              <button class="selection-button" data-value="b">Flat</button>
-            </div>
-          </div>
-          <div style="text-align: center;">
-            <button id="staff-position-submit" class="submit-button" disabled>
-              <span class="submit-arrow">→</span>
-            </button>
+          <div class="choice-row">
+              <div class="selection-row">
+                <div class="selection-buttons" id="above-below-buttons">
+                  <button class="selection-button" data-value="above">Above</button>
+                  <button class="selection-button" data-value="below">Below</button>
+                </div>
+              </div>
+              <div class="selection-row">
+                <div class="selection-buttons" id="staff-accidental-buttons">
+                  <button class="selection-button" data-value="#">Sharp</button>
+                  <button class="selection-button" data-value="b">Flat</button>
+                </div>
+              </div>
+              <div style="text-align: center;">
+                <button id="staff-position-submit" class="submit-button" disabled>
+                  <span class="submit-arrow">→</span>
+                </button>
+              </div>
           </div>
         </div>
       </div>
@@ -89,23 +83,23 @@ layout: default
       <!-- Modal overlays - outside the interfaces so they don't get disabled -->
       <div class="mode-answer-overlay hidden" id="note-name-overlay">
         <div id="note-name-answer-controls">
-          <span class="close-button">&times;</span>
           <div id="note-name-assessment-buttons" class="hidden">
             <button data-value="1">Hard</button>
             <button data-value="2">Good</button>
             <button data-value="3">Easy</button>
           </div>
+          <span class="close-button">&times;</span>
         </div>
       </div>
 
       <div class="mode-answer-overlay hidden" id="staff-position-overlay">
         <div id="staff-position-answer-controls">
-          <span class="close-button">&times;</span>
           <div id="staff-position-assessment-buttons" class="hidden">
             <button data-value="1">Hard</button>
             <button data-value="2">Good</button>
             <button data-value="3">Easy</button>
           </div>
+          <span class="close-button">&times;</span>
         </div>
       </div>
 
@@ -187,8 +181,10 @@ layout: default
       </div>
     </div>
   </div>
-  <div id="piano" class="panel">
-    <div class="mode-feedback-indicator hidden" id="keyboard-feedback"></div>
+  <div id="piano-container">
+      <div id="piano" class="panel">
+        <div class="mode-feedback-indicator hidden" id="keyboard-feedback"></div>
+      </div>
   </div>
 
   <!-- Add User Modal -->
