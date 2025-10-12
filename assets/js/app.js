@@ -125,24 +125,7 @@ function init() {
 
     if (undoButton) {
         undoButton.addEventListener("click", () => {
-            if (state.previousNote) {
-                state.currentNote = state.previousNote;
-                state.previousNote = null;
-                state.users.default.currentSession.guesses.pop();
-                drawNote(state.currentNote.clef, state.currentNote.note);
-                document.querySelectorAll(".key").forEach(key => {
-                    key.classList.remove("correct", "incorrect");
-                    key.addEventListener("click", handleKeyClick);
-                });
-                document.getElementById("feedback").textContent = "";
-                document.getElementById("assessment-buttons").classList.add("hidden");
-                document.getElementById("next-controls").classList.add("hidden");
-                document.getElementById("answer-controls").classList.add("hidden");
-
-                // Reset guess interface states
-                resetNoteNameInterface();
-                resetStaffPositionInterface();
-            }
+            handleUndo();
         });
     } else {
         console.error("Undo button not found");
@@ -580,6 +563,219 @@ function hideAllModeOverlays() {
     document.querySelectorAll('.selection-button.correct-answer').forEach(btn => {
         btn.classList.remove('correct-answer');
     });
+}
+
+function handleUndo() {
+    // Check if current note has any guesses to undo
+    const currentNoteHasGuesses = Object.keys(state.currentNoteGuesses).length > 0;
+
+    if (currentNoteHasGuesses) {
+        // Undo the most recent guess for current note
+        undoLastGuessForCurrentNote();
+    } else if (state.previousNote) {
+        // No guesses for current note, go to previous note
+        goToPreviousNote();
+    }
+    // If no guesses and no previous note, do nothing
+}
+
+function undoLastGuessForCurrentNote() {
+    const user = state.users[state.currentUser];
+
+    // Find the most recent guess for the current note from any mode
+    let lastGuessMode = null;
+    let lastGuessTime = 0;
+
+    state.currentModes.forEach(mode => {
+        if (state.currentNoteGuesses[mode]) {
+            const modeGuesses = user.currentSession.modeGuesses[mode];
+            const lastModeGuess = modeGuesses[modeGuesses.length - 1];
+            if (lastModeGuess && lastModeGuess.note === state.currentNote && lastModeGuess.endTime > lastGuessTime) {
+                lastGuessMode = mode;
+                lastGuessTime = lastModeGuess.endTime;
+            }
+        }
+    });
+
+    if (lastGuessMode) {
+        // Remove the guess from currentNoteGuesses
+        delete state.currentNoteGuesses[lastGuessMode];
+
+        // Remove the guess from the mode-specific array
+        const modeGuesses = user.currentSession.modeGuesses[lastGuessMode];
+        const lastModeGuess = modeGuesses[modeGuesses.length - 1];
+        if (lastModeGuess && lastModeGuess.note === state.currentNote) {
+            modeGuesses.pop();
+        }
+
+        // Remove from legacy guesses array (find the matching guess)
+        for (let i = user.currentSession.guesses.length - 1; i >= 0; i--) {
+            const guess = user.currentSession.guesses[i];
+            if (guess.note === state.currentNote && guess.mode === lastGuessMode && guess.endTime === lastGuessTime) {
+                user.currentSession.guesses.splice(i, 1);
+                break;
+            }
+        }
+
+        // Reset UI for the undone mode
+        resetModeUI(lastGuessMode);
+
+        // Hide mode feedback indicator for this mode
+        showModeFeedbackIndicator(lastGuessMode, false);
+        document.getElementById(getModeUIFeedbackId(lastGuessMode)).classList.add('hidden');
+
+        // Re-enable the interface for this mode
+        const interfaceElement = getInterfaceElement(lastGuessMode);
+        if (interfaceElement) {
+            interfaceElement.classList.remove('answered');
+        }
+
+        // Re-enable selection buttons and submit buttons
+        document.querySelectorAll('.selection-button').forEach(btn => {
+            btn.disabled = false;
+        });
+
+        // Reset submit button states properly
+        if (lastGuessMode === 'noteName') {
+            document.getElementById('note-name-submit').disabled = true; // Will be enabled when selections are made
+        } else if (lastGuessMode === 'staffPosition') {
+            document.getElementById('staff-position-submit').disabled = true; // Will be enabled when selections are made
+        }
+
+        // Hide mode-specific overlays for the undone mode
+        const overlay = getModeOverlay(lastGuessMode);
+        if (overlay) {
+            overlay.classList.add('hidden');
+            const assessmentButtons = overlay.querySelector(`#${getModePrefix(lastGuessMode)}-assessment-buttons`);
+            if (assessmentButtons) {
+                assessmentButtons.classList.add('hidden');
+            }
+        }
+
+        // Check if we need to hide assessment controls
+        const hasCorrectGuesses = Object.values(state.currentNoteGuesses).some(g => g.correct);
+        if (!hasCorrectGuesses) {
+            document.getElementById("assessment-buttons").classList.add("hidden");
+            document.getElementById("next-controls").classList.add("hidden");
+            document.getElementById("answer-controls").classList.add("hidden");
+        }
+
+        // Update stats and feedback
+        updateStats();
+        updateGlobalFeedback();
+    }
+}
+
+function goToPreviousNote() {
+    if (state.previousNote) {
+        state.currentNote = state.previousNote;
+        state.previousNote = null;
+
+        // Remove the last guess from legacy array (for backward compatibility)
+        const user = state.users[state.currentUser];
+        if (user.currentSession.guesses.length > 0) {
+            user.currentSession.guesses.pop();
+        }
+
+        drawNote(state.currentNote.clef, state.currentNote.note);
+
+        // Reset all UI elements
+        resetAllInterfacesAndState();
+    }
+}
+
+function resetModeUI(mode) {
+    if (mode === 'keyboard') {
+        // Reset keyboard UI
+        document.querySelectorAll(".key").forEach(key => {
+            key.classList.remove("correct", "incorrect");
+            key.addEventListener("click", handleKeyClick);
+        });
+    } else if (mode === 'noteName') {
+        resetNoteNameInterface();
+        // Also reset the internal state variables
+        if (window.resetNoteNameState) {
+            window.resetNoteNameState();
+        }
+    } else if (mode === 'staffPosition') {
+        resetStaffPositionInterface();
+        // Also reset the internal state variables
+        if (window.resetStaffPositionState) {
+            window.resetStaffPositionState();
+        }
+    }
+
+    // Clear correct answer highlighting for this mode
+    document.querySelectorAll('.selection-button.correct-answer').forEach(btn => {
+        btn.classList.remove('correct-answer');
+    });
+}
+
+function getModeUIFeedbackId(mode) {
+    switch (mode) {
+        case 'keyboard': return 'keyboard-feedback';
+        case 'noteName': return 'note-name-feedback';
+        case 'staffPosition': return 'staff-position-feedback';
+        default: return '';
+    }
+}
+
+function updateGlobalFeedback() {
+    // Update the main feedback based on remaining guesses
+    const hasAnyGuess = Object.keys(state.currentNoteGuesses).length > 0;
+    if (!hasAnyGuess) {
+        document.getElementById("feedback").textContent = "";
+    } else {
+        // Show general feedback if there are still guesses
+        const hasCorrect = Object.values(state.currentNoteGuesses).some(g => g.correct);
+        const hasIncorrect = Object.values(state.currentNoteGuesses).some(g => !g.correct);
+        if (hasCorrect && hasIncorrect) {
+            document.getElementById("feedback").textContent = "✅❌";
+        } else if (hasCorrect) {
+            document.getElementById("feedback").textContent = "✅";
+        } else if (hasIncorrect) {
+            document.getElementById("feedback").textContent = "❌";
+        }
+    }
+}
+
+function resetAllInterfacesAndState() {
+    // Reset all interface states
+    resetNoteNameInterface();
+    resetStaffPositionInterface();
+
+    // Reset keyboard UI
+    document.querySelectorAll(".key").forEach(key => {
+        key.classList.remove("correct", "incorrect");
+        key.addEventListener("click", handleKeyClick);
+    });
+
+    // Reset state
+    state.currentNoteGuesses = {};
+    state.noteAnswered = false;
+
+    // Reset UI elements
+    document.getElementById("feedback").textContent = "";
+    document.getElementById("assessment-buttons").classList.add("hidden");
+    document.getElementById("next-controls").classList.add("hidden");
+    document.getElementById("answer-controls").classList.add("hidden");
+
+    // Re-enable guessing interfaces
+    document.querySelectorAll('.selection-button').forEach(btn => {
+        btn.disabled = false;
+    });
+    document.getElementById('note-name-submit').disabled = true;
+    document.getElementById('staff-position-submit').disabled = true;
+
+    // Remove answered state from interfaces
+    document.getElementById('note-name-interface').classList.remove('answered');
+    document.getElementById('staff-position-interface').classList.remove('answered');
+
+    // Hide all mode feedback indicators
+    hideAllModeFeedbackIndicators();
+
+    // Hide all mode overlays
+    hideAllModeOverlays();
 }
 
 function startNewRound() {
