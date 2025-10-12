@@ -10,16 +10,26 @@ const state = {
                 trebleClefRange: "B3-D6",
                 includeSharps: true,
                 includeFlats: false,
+                enableKeyboardMode: true,
+                enableNoteNameMode: false,
+                enableStaffPositionMode: false,
             },
             sessionHistory: [],
             currentSession: {
                 startTime: null,
                 endTime: null,
-                guesses: [],
+                guesses: [], // Still keep for backward compatibility
+                modeGuesses: {
+                    keyboard: [],
+                    noteName: [],
+                    staffPosition: []
+                }
             }
         }
     },
     currentNote: null,
+    currentModes: [], // Array of active guessing modes for current note
+    currentNoteGuesses: {}, // Track guesses for current note by mode
     noteStartTime: null,
 };
 
@@ -70,6 +80,15 @@ function init() {
         user.settings.trebleClefRange = document.getElementById("treble-clef-range").value;
         user.settings.includeSharps = document.getElementById("include-sharps").checked;
         user.settings.includeFlats = document.getElementById("include-flats").checked;
+        user.settings.enableKeyboardMode = document.getElementById("enable-keyboard-mode").checked;
+        user.settings.enableNoteNameMode = document.getElementById("enable-note-name-mode").checked;
+        user.settings.enableStaffPositionMode = document.getElementById("enable-staff-position-mode").checked;
+
+        // Validate that at least one mode is enabled
+        if (!user.settings.enableKeyboardMode && !user.settings.enableNoteNameMode && !user.settings.enableStaffPositionMode) {
+            alert("At least one guessing mode must be enabled!");
+            return;
+        }
 
         const piano = document.getElementById("piano");
         piano.innerHTML = "";
@@ -152,10 +171,23 @@ function init() {
         assessmentButtons.addEventListener("click", (event) => {
             if (event.target.tagName === "BUTTON") {
                 const value = parseInt(event.target.dataset.value, 10);
-                const lastGuess = state.users.default.currentSession.guesses.slice(-1)[0];
-                if (lastGuess) {
-                    lastGuess.selfAssessment = value;
-                }
+
+                // Apply rating to all correct guesses for this note
+                Object.keys(state.currentNoteGuesses).forEach(mode => {
+                    const guess = state.currentNoteGuesses[mode];
+                    if (guess && guess.correct) {
+                        // Find the corresponding guess in the mode-specific array and add rating
+                        const modeGuesses = state.users[state.currentUser].currentSession.modeGuesses[mode];
+                        const lastModeGuess = modeGuesses[modeGuesses.length - 1];
+                        if (lastModeGuess && lastModeGuess.note === state.currentNote) {
+                            lastModeGuess.selfAssessment = value;
+                        }
+
+                        // Mark this guess as having a rating
+                        guess.hasRating = true;
+                    }
+                });
+
                 assessmentButtons.classList.add("hidden");
                 document.getElementById("answer-controls").classList.add("hidden");
                 startNewRound();
@@ -178,21 +210,368 @@ function init() {
     } else {
         console.error("Next button not found");
     }
+
+    // Handle standalone next button
+    const standaloneNextButton = document.getElementById("standalone-next-button");
+    if (standaloneNextButton) {
+        standaloneNextButton.addEventListener("click", () => {
+            hideAllModeOverlays();
+            startNewRound();
+        });
+    } else {
+        console.error("Standalone next button not found");
+    }
+
+    // Setup note name interface
+    setupNoteNameInterface();
+
+    // Setup staff position interface
+    setupStaffPositionInterface();
+
+    // Setup mode-specific answer controls
+    setupModeAnswerControls();
+
+    // Setup feedback indicator click handlers
+    setupFeedbackIndicatorClickHandlers();
+
+    // Add debug test for modal (remove after testing)
+    window.testModal = function() {
+        console.log('Testing modal display...');
+        const overlay = document.getElementById('note-name-overlay');
+        const assessmentButtons = document.getElementById('note-name-assessment-buttons');
+        const interfaceElement = document.getElementById('note-name-interface');
+
+        // Position and show overlay
+        positionOverlayOnInterface(overlay, interfaceElement);
+        overlay.classList.remove('hidden');
+        assessmentButtons.classList.remove('hidden');
+
+        console.log('Modal should now be visible. Overlay:', overlay, 'Buttons:', assessmentButtons);
+    };
+
+    console.log('Added window.testModal() - call this in browser console to test');
+}
+
+function setupNoteNameInterface() {
+    const noteLetterButtons = document.getElementById('note-letter-buttons');
+    const accidentalButtons = document.getElementById('accidental-buttons');
+    const submitButton = document.getElementById('note-name-submit');
+
+    let selectedNote = '';
+    let selectedAccidental = '';
+
+    function updateSubmitButton() {
+        submitButton.disabled = !selectedNote;
+    }
+
+    function setupButtonGroup(container, onSelect, toggleable = false) {
+        container.addEventListener('click', (e) => {
+            if (e.target.classList.contains('selection-button')) {
+                if (toggleable) {
+                    // For toggleable groups, clicking selected button deselects it
+                    if (e.target.classList.contains('selected')) {
+                        e.target.classList.remove('selected');
+                        onSelect('');
+                    } else {
+                        // Remove selected from all buttons in this group
+                        container.querySelectorAll('.selection-button').forEach(btn =>
+                            btn.classList.remove('selected')
+                        );
+                        // Add selected to clicked button
+                        e.target.classList.add('selected');
+                        onSelect(e.target.dataset.value);
+                    }
+                } else {
+                    // Non-toggleable groups work as before
+                    container.querySelectorAll('.selection-button').forEach(btn =>
+                        btn.classList.remove('selected')
+                    );
+                    e.target.classList.add('selected');
+                    onSelect(e.target.dataset.value);
+                }
+            }
+        });
+    }
+
+    setupButtonGroup(noteLetterButtons, (value) => {
+        selectedNote = value;
+        updateSubmitButton();
+    });
+
+    setupButtonGroup(accidentalButtons, (value) => {
+        selectedAccidental = value;
+        updateSubmitButton();
+    }, true); // Make accidental buttons toggleable
+
+    submitButton.addEventListener('click', () => {
+        if (!selectedNote) return;
+
+        // Construct the note name
+        const octave = state.currentNote.note.slice(-1);
+        const guessedNote = selectedNote + selectedAccidental + octave;
+
+        handleGuess(guessedNote, 'noteName');
+    });
+}
+
+function setupStaffPositionInterface() {
+    const positionButtons = document.getElementById('position-buttons');
+    const lineSpaceButtons = document.getElementById('line-space-buttons');
+    const aboveBelowButtons = document.getElementById('above-below-buttons');
+    const accidentalButtons = document.getElementById('staff-accidental-buttons');
+    const submitButton = document.getElementById('staff-position-submit');
+
+    let selectedPosition = '';
+    let selectedLineSpace = '';
+    let selectedAboveBelow = '';
+    let selectedAccidental = '';
+
+    function updateSubmitButton() {
+        submitButton.disabled = !selectedPosition || !selectedLineSpace;
+    }
+
+    function setupButtonGroup(container, onSelect, toggleable = false) {
+        container.addEventListener('click', (e) => {
+            if (e.target.classList.contains('selection-button')) {
+                if (toggleable) {
+                    // For toggleable groups, clicking selected button deselects it
+                    if (e.target.classList.contains('selected')) {
+                        e.target.classList.remove('selected');
+                        onSelect('');
+                    } else {
+                        // Remove selected from all buttons in this group
+                        container.querySelectorAll('.selection-button').forEach(btn =>
+                            btn.classList.remove('selected')
+                        );
+                        // Add selected to clicked button
+                        e.target.classList.add('selected');
+                        onSelect(e.target.dataset.value);
+                    }
+                } else {
+                    // Non-toggleable groups work as before
+                    container.querySelectorAll('.selection-button').forEach(btn =>
+                        btn.classList.remove('selected')
+                    );
+                    e.target.classList.add('selected');
+                    onSelect(e.target.dataset.value);
+                }
+            }
+        });
+    }
+
+    setupButtonGroup(positionButtons, (value) => {
+        selectedPosition = value;
+        updateSubmitButton();
+    });
+
+    setupButtonGroup(lineSpaceButtons, (value) => {
+        selectedLineSpace = value;
+        updateSubmitButton();
+    });
+
+    setupButtonGroup(aboveBelowButtons, (value) => {
+        selectedAboveBelow = value;
+        updateSubmitButton();
+    }, true); // Make location buttons toggleable
+
+    setupButtonGroup(accidentalButtons, (value) => {
+        selectedAccidental = value;
+        updateSubmitButton();
+    }, true); // Make accidental buttons toggleable
+
+    submitButton.addEventListener('click', () => {
+        const staffGuess = constructStaffPositionGuess();
+        if (staffGuess) {
+            handleGuess(staffGuess, 'staffPosition');
+        }
+    });
+}
+
+function setupModeAnswerControls() {
+    // Note name assessment buttons
+    const noteNameAssessment = document.getElementById('note-name-assessment-buttons');
+    if (noteNameAssessment) {
+        console.log('Setting up note name assessment buttons:', noteNameAssessment);
+        noteNameAssessment.addEventListener('click', (event) => {
+            console.log('Note name assessment clicked:', event.target);
+            if (event.target.tagName === 'BUTTON') {
+                console.log('Assessment button clicked with value:', event.target.dataset.value);
+                const value = parseInt(event.target.dataset.value, 10);
+                handleModeAssessment('noteName', value);
+            }
+        });
+    } else {
+        console.error('Note name assessment buttons not found!');
+    }
+
+    // Staff position assessment buttons
+    const staffPositionAssessment = document.getElementById('staff-position-assessment-buttons');
+    if (staffPositionAssessment) {
+        staffPositionAssessment.addEventListener('click', (event) => {
+            if (event.target.tagName === 'BUTTON') {
+                const value = parseInt(event.target.dataset.value, 10);
+                handleModeAssessment('staffPosition', value);
+            }
+        });
+    }
+}
+
+function setupFeedbackIndicatorClickHandlers() {
+    // Add click handlers for each feedback indicator
+    const indicators = [
+        { id: 'keyboard-feedback', mode: 'keyboard' },
+        { id: 'note-name-feedback', mode: 'noteName' },
+        { id: 'staff-position-feedback', mode: 'staffPosition' }
+    ];
+
+    indicators.forEach(({ id, mode }) => {
+        const indicator = document.getElementById(id);
+        if (indicator) {
+            indicator.addEventListener('click', () => {
+                // Only show difficulty modal for correct answers
+                const guess = state.currentNoteGuesses[mode];
+                if (guess && guess.correct) {
+                    showModeAssessmentModal(mode);
+                }
+            });
+        }
+    });
+
+    // Add close button handlers for mode-specific overlays
+    const noteNameOverlay = document.getElementById('note-name-overlay');
+    const staffPositionOverlay = document.getElementById('staff-position-overlay');
+
+    if (noteNameOverlay) {
+        const closeBtn = noteNameOverlay.querySelector('.close-button');
+        if (closeBtn) {
+            closeBtn.addEventListener('click', () => {
+                noteNameOverlay.classList.add('hidden');
+                document.getElementById('note-name-assessment-buttons').classList.add('hidden');
+            });
+        }
+    }
+
+    if (staffPositionOverlay) {
+        const closeBtn = staffPositionOverlay.querySelector('.close-button');
+        if (closeBtn) {
+            closeBtn.addEventListener('click', () => {
+                staffPositionOverlay.classList.add('hidden');
+                document.getElementById('staff-position-assessment-buttons').classList.add('hidden');
+            });
+        }
+    }
+}
+
+function showModeAssessmentModal(mode) {
+    const overlay = getModeOverlay(mode);
+    const interfaceElement = getInterfaceElement(mode);
+
+    if (overlay && interfaceElement) {
+        // Position overlay to cover only the specific interface
+        positionOverlayOnInterface(overlay, interfaceElement);
+
+        // Show overlay with assessment buttons
+        const assessmentButtons = overlay.querySelector(`#${getModePrefix(mode)}-assessment-buttons`);
+        if (assessmentButtons) {
+            assessmentButtons.classList.remove('hidden');
+            overlay.classList.remove('hidden');
+        }
+    }
+}
+
+function handleModeAssessment(mode, value) {
+    // Find the specific mode guess and add rating
+    const guess = state.currentNoteGuesses[mode];
+    if (guess && guess.correct) {
+        // Find the corresponding guess in the mode-specific array and add rating
+        const modeGuesses = state.users[state.currentUser].currentSession.modeGuesses[mode];
+        const lastModeGuess = modeGuesses[modeGuesses.length - 1];
+        if (lastModeGuess && lastModeGuess.note === state.currentNote) {
+            lastModeGuess.selfAssessment = value;
+        }
+
+        // Mark this guess as having a rating
+        guess.hasRating = true;
+
+        // Update the feedback indicator to show it has been rated
+        showModeFeedbackIndicator(mode, true, true);
+    }
+
+    // Hide this mode's overlay
+    const overlay = getModeOverlay(mode);
+    if (overlay) {
+        overlay.classList.add('hidden');
+        const assessmentButtons = overlay.querySelector(`#${getModePrefix(mode)}-assessment-buttons`);
+        if (assessmentButtons) {
+            assessmentButtons.classList.add('hidden');
+        }
+    }
+
+    // Check if we should advance to next note
+    checkAllModesComplete();
+}
+
+function checkAllModesComplete() {
+    // Check if all modes have either been guessed and rated (if correct) or just guessed (if wrong)
+    const allModesComplete = state.currentModes.every(mode => {
+        const guess = state.currentNoteGuesses[mode];
+        if (!guess) return false; // Mode not guessed yet
+        if (guess.correct && !guess.hasRating) return false; // Correct guess needs rating
+        return true; // Wrong guess or rated correct guess
+    });
+
+    if (allModesComplete) {
+        startNewRound();
+    }
+}
+
+function hideAllModeOverlays() {
+    // Hide overlays
+    document.getElementById('note-name-overlay').classList.add('hidden');
+    document.getElementById('staff-position-overlay').classList.add('hidden');
+
+    // Hide assessment buttons
+    document.getElementById('note-name-assessment-buttons').classList.add('hidden');
+    document.getElementById('staff-position-assessment-buttons').classList.add('hidden');
+
+    // Remove answered state from interfaces
+    document.getElementById('note-name-interface').classList.remove('answered');
+    document.getElementById('staff-position-interface').classList.remove('answered');
+
+    // Clear correct answer highlighting
+    document.querySelectorAll('.selection-button.correct-answer').forEach(btn => {
+        btn.classList.remove('correct-answer');
+    });
 }
 
 function startNewRound() {
     // Reset key colors and feedback
     document.querySelectorAll(".key").forEach(key => {
         key.classList.remove("correct", "incorrect");
-        key.addEventListener("click", handleKeyClick);
     });
     document.getElementById("feedback").textContent = "";
+
+    // Clear correct answer highlights from all selection buttons
+    document.querySelectorAll(".selection-button").forEach(button => {
+        button.classList.remove("correct-answer");
+    });
 
     // Hide all answer controls
     document.getElementById("assessment-buttons").classList.add("hidden");
     document.getElementById("next-controls").classList.add("hidden");
     document.getElementById("answer-controls").classList.add("hidden");
 
+    // Disable standalone next button at start of new round
+    const standaloneNext = document.getElementById("standalone-next-button");
+    if (standaloneNext) {
+        standaloneNext.disabled = true;
+    }
+
+    // Hide all mode overlays
+    hideAllModeOverlays();
+
+    // Hide all mode feedback indicators
+    hideAllModeFeedbackIndicators();
 
     state.previousNote = state.currentNote;
     const lastNote = state.currentNote;
@@ -201,13 +580,26 @@ function startNewRound() {
     }
     state.noteAnswered = false;
 
-
     const possibleNotes = getPossibleNotes();
     const weights = calculateWeights(possibleNotes);
     const selectedNote = selectNote(possibleNotes, weights);
 
     state.currentNote = selectedNote;
     state.noteStartTime = Date.now();
+
+    // Initialize current modes and reset guesses for the new note
+    const user = state.users[state.currentUser];
+    state.currentModes = [];
+    if (user.settings.enableKeyboardMode) state.currentModes.push('keyboard');
+    if (user.settings.enableNoteNameMode) state.currentModes.push('noteName');
+    if (user.settings.enableStaffPositionMode) state.currentModes.push('staffPosition');
+
+    // Reset current note guesses
+    state.currentNoteGuesses = {};
+
+    // Show appropriate guessing interfaces based on enabled modes
+    showGuessingInterfaces();
+
     drawNote(selectedNote.clef, selectedNote.note);
 }
 
@@ -304,6 +696,180 @@ function getCanonicalNoteName(note) {
     return note; // Return original note if no mapping needed
 }
 
+function getActiveModes() {
+    const user = state.users[state.currentUser];
+    const settings = user.settings;
+    const modes = [];
+
+    if (settings.enableKeyboardMode) modes.push('keyboard');
+    if (settings.enableNoteNameMode) modes.push('noteName');
+    if (settings.enableStaffPositionMode) modes.push('staffPosition');
+
+    return modes;
+}
+
+function showGuessingInterfaces() {
+    const activeModes = getActiveModes();
+
+    // Hide all interfaces first
+    document.getElementById('note-name-interface').classList.add('hidden');
+    document.getElementById('staff-position-interface').classList.add('hidden');
+
+    // Show keyboard if enabled
+    const piano = document.getElementById('piano');
+    if (activeModes.includes('keyboard')) {
+        piano.style.display = 'flex';
+        // Enable piano key clicks
+        document.querySelectorAll('.key').forEach(key => {
+            key.addEventListener('click', handleKeyClick);
+        });
+    } else {
+        piano.style.display = 'none';
+    }
+
+    // Show other interfaces
+    if (activeModes.includes('noteName')) {
+        document.getElementById('note-name-interface').classList.remove('hidden');
+        resetNoteNameInterface();
+    }
+
+    if (activeModes.includes('staffPosition')) {
+        document.getElementById('staff-position-interface').classList.remove('hidden');
+        resetStaffPositionInterface();
+    }
+
+    // Re-enable all selection buttons
+    document.querySelectorAll('.selection-button').forEach(btn => {
+        btn.disabled = false;
+    });
+
+    state.currentModes = activeModes;
+}
+
+function resetNoteNameInterface() {
+    // Reset all selections
+    document.querySelectorAll('#note-letter-buttons .selection-button').forEach(btn =>
+        btn.classList.remove('selected')
+    );
+    document.querySelectorAll('#accidental-buttons .selection-button').forEach(btn =>
+        btn.classList.remove('selected')
+    );
+
+    document.getElementById('note-name-submit').disabled = true;
+}
+
+function resetStaffPositionInterface() {
+    // Reset all selections
+    document.querySelectorAll('#position-buttons .selection-button').forEach(btn =>
+        btn.classList.remove('selected')
+    );
+    document.querySelectorAll('#line-space-buttons .selection-button').forEach(btn =>
+        btn.classList.remove('selected')
+    );
+    document.querySelectorAll('#above-below-buttons .selection-button').forEach(btn =>
+        btn.classList.remove('selected')
+    );
+    document.querySelectorAll('#staff-accidental-buttons .selection-button').forEach(btn =>
+        btn.classList.remove('selected')
+    );
+
+    document.getElementById('staff-position-submit').disabled = true;
+}
+
+function constructStaffPositionGuess() {
+    const position = document.querySelector('#position-buttons .selection-button.selected')?.dataset.value || '';
+    const lineSpace = document.querySelector('#line-space-buttons .selection-button.selected')?.dataset.value || '';
+    const aboveBelow = document.querySelector('#above-below-buttons .selection-button.selected')?.dataset.value || '';
+    const accidental = document.querySelector('#staff-accidental-buttons .selection-button.selected')?.dataset.value || '';
+
+    if (!position || !lineSpace) return null;
+
+    // Convert staff position to note name based on clef
+    const clef = state.currentNote.clef;
+    const octave = state.currentNote.note.slice(-1);
+
+    let noteName = getStaffPositionNote(clef, position, lineSpace, aboveBelow);
+    if (!noteName) return null;
+
+    return noteName + accidental + octave;
+}
+
+function getStaffPositionNote(clef, position, lineSpace, aboveBelow) {
+    // Map staff positions to note names for treble and bass clef
+    const treblePositions = {
+        // On staff (bottom to top: bottom line, bottom space, second line, second space, middle line, middle space, fourth line, top space, top line)
+        'bottom_line': 'E',
+        'bottom_space': 'F',
+        'second_line': 'G',
+        'second_space': 'A',
+        'middle_line': 'B',
+        'middle_space': 'C',
+        'fourth_line': 'D',
+        'top_space': 'E',
+        'top_line': 'F',
+        // Below staff
+        '1st_space_below': 'D',
+        '1st_line_below': 'C',
+        '2nd_space_below': 'B',
+        '2nd_line_below': 'A',
+        '3rd_space_below': 'G',
+        '3rd_line_below': 'F',
+        '4th_space_below': 'E',
+        '4th_line_below': 'D',
+        // Above staff
+        '1st_line_above': 'G',
+        '1st_space_above': 'A',
+        '2nd_line_above': 'B',
+        '2nd_space_above': 'C',
+        '3rd_line_above': 'D',
+        '3rd_space_above': 'E',
+        '4th_line_above': 'F',
+        '4th_space_above': 'G'
+    };
+
+    const bassPositions = {
+        // On staff (bottom to top: bottom line, bottom space, second line, second space, middle line, middle space, fourth line, top space, top line)
+        'bottom_line': 'G',
+        'bottom_space': 'A',
+        'second_line': 'B',
+        'second_space': 'C',
+        'middle_line': 'D',
+        'middle_space': 'E',
+        'fourth_line': 'F',
+        'top_space': 'G',
+        'top_line': 'A',
+        // Below staff
+        '1st_space_below': 'F',
+        '1st_line_below': 'E',
+        '2nd_space_below': 'D',
+        '2nd_line_below': 'C',
+        '3rd_space_below': 'B',
+        '3rd_line_below': 'A',
+        '4th_space_below': 'G',
+        '4th_line_below': 'F',
+        // Above staff
+        '1st_line_above': 'B',
+        '1st_space_above': 'C',
+        '2nd_line_above': 'D',
+        '2nd_space_above': 'E',
+        '3rd_line_above': 'F',
+        '3rd_space_above': 'G',
+        '4th_line_above': 'A',
+        '4th_space_above': 'B'
+    };
+
+    // Construct key for lookup
+    let key;
+    if (aboveBelow) {
+        key = `${position}_${lineSpace}_${aboveBelow}`;
+    } else {
+        key = `${position}_${lineSpace}`;
+    }
+
+    const positions = clef === 'treble' ? treblePositions : bassPositions;
+    return positions[key] || null;
+}
+
 function getScoreForTime(seconds) {
     if (seconds < 30) return 1;
     if (seconds < 45) return 0.9;
@@ -314,23 +880,31 @@ function getScoreForTime(seconds) {
 
 function calculateWeights(possibleNotes) {
     const user = state.users[state.currentUser];
+    const activeModes = getActiveModes();
     const history = user.sessionHistory.flatMap(session => session.guesses);
     const twoWeeksAgo = Date.now() - 14 * 24 * 60 * 60 * 1000;
     const recentHistory = history.filter(guess => guess.startTime > twoWeeksAgo);
 
+    // Initialize note statistics for each mode
     const noteStats = {};
     possibleNotes.forEach(note => {
         const noteId = `${note.clef}-${note.note}`;
-        noteStats[noteId] = { seen: 0, correct: 0 };
+        noteStats[noteId] = {};
+        activeModes.forEach(mode => {
+            noteStats[noteId][mode] = { seen: 0, correct: 0 };
+        });
     });
 
+    // Collect statistics from history
     recentHistory.forEach(guess => {
         const noteId = `${guess.note.clef}-${guess.note.note}`;
-        if (noteStats[noteId]) {
-            noteStats[noteId].seen++;
+        const mode = guess.mode || 'keyboard'; // Default to keyboard for older data
+
+        if (noteStats[noteId] && noteStats[noteId][mode]) {
+            noteStats[noteId][mode].seen++;
             if (guess.correct) {
                 const timeTaken = (guess.endTime - guess.startTime) / 1000;
-                noteStats[noteId].correct += getScoreForTime(timeTaken);
+                noteStats[noteId][mode].correct += getScoreForTime(timeTaken);
             }
         }
     });
@@ -339,20 +913,34 @@ function calculateWeights(possibleNotes) {
         const noteId = `${note.clef}-${note.note}`;
         const stats = noteStats[noteId];
 
+        // Don't repeat the same note
         if ((note.clef === state.currentNote?.clef && note.note === state.currentNote?.note) ||
             (note.clef === state.lastAnsweredNote?.clef && note.note === state.lastAnsweredNote?.note)) {
             return 0;
         }
 
-        if (stats.seen < 10) {
-            return 1;
-        }
+        // Calculate combined weight across all active modes
+        let combinedWeight = 0;
+        let totalModes = 0;
 
-        const successRate = stats.correct / stats.seen;
-        const baseWeight = 1 - successRate;
+        activeModes.forEach(mode => {
+            const modeStats = stats[mode];
+            if (modeStats.seen < 10) {
+                // Not enough data, prioritize this note
+                combinedWeight += 1;
+            } else {
+                const successRate = modeStats.correct / modeStats.seen;
+                const modeWeight = 1 - successRate;
+                combinedWeight += modeWeight;
+            }
+            totalModes++;
+        });
+
+        // Average the weights across active modes
+        const avgWeight = combinedWeight / totalModes;
         const minWeight = 1 / (5 * possibleNotes.length);
 
-        return Math.max(baseWeight, minWeight);
+        return Math.max(avgWeight, minWeight);
     });
 
     return weights;
@@ -373,56 +961,325 @@ function selectNote(possibleNotes, weights) {
     return possibleNotes[possibleNotes.length - 1];
 }
 
-function handleGuess(note) {
+function handleGuess(note, mode = 'keyboard') {
     const correctNote = state.currentNote.note;
-    const key = document.querySelector(`.key[data-note="${note}"]`);
 
     // Check if the guess is correct (including enharmonic equivalents)
     const isCorrect = note === correctNote || getCanonicalNoteName(note) === getCanonicalNoteName(correctNote);
 
-    if (isCorrect) {
-        key.classList.add("correct");
-        document.getElementById("feedback").textContent = "✅";
-    } else {
-        key.classList.add("incorrect");
-        // Use canonical note name to find the correct key (piano keys use sharp names)
-        const canonicalCorrectNote = getCanonicalNoteName(correctNote);
-        const correctKey = document.querySelector(`.key[data-note="${canonicalCorrectNote}"]`);
-        if (correctKey) {
-            correctKey.classList.add("correct");
+    // Update UI feedback based on mode
+    if (mode === 'keyboard') {
+        const key = document.querySelector(`.key[data-note="${note}"]`);
+        if (isCorrect) {
+            key.classList.add("correct");
+        } else {
+            key.classList.add("incorrect");
+            // Use canonical note name to find the correct key (piano keys use sharp names)
+            const canonicalCorrectNote = getCanonicalNoteName(correctNote);
+            const correctKey = document.querySelector(`.key[data-note="${canonicalCorrectNote}"]`);
+            if (correctKey) {
+                correctKey.classList.add("correct");
+            }
         }
-        document.getElementById("feedback").textContent = "❌";
     }
 
-    // Record the guess
-    state.users.default.currentSession.guesses.push({
+    // Show feedback
+    document.getElementById("feedback").textContent = isCorrect ? "✅" : "❌";
+
+    // Enable standalone next button once any answer is given
+    const standaloneNext = document.getElementById("standalone-next-button");
+    if (standaloneNext) {
+        standaloneNext.disabled = false;
+    }
+
+    // Record the guess in both legacy and mode-specific arrays
+    const guessData = {
         note: state.currentNote,
         guess: note,
+        mode: mode,
         startTime: state.noteStartTime,
         endTime: Date.now(),
         correct: isCorrect,
-    });
+    };
 
-    // Disable keys until the next round
-    document.querySelectorAll(".key").forEach(key => {
-        key.removeEventListener("click", handleKeyClick);
-    });
+    // Add to legacy array for backward compatibility
+    state.users[state.currentUser].currentSession.guesses.push(guessData);
 
-    state.noteAnswered = true;
+    // Add to mode-specific array
+    state.users[state.currentUser].currentSession.modeGuesses[mode].push(guessData);
 
-    // Show appropriate controls based on answer correctness
-    if (isCorrect) {
-        // Correct answer: show difficulty assessment buttons
-        document.getElementById("assessment-buttons").classList.remove("hidden");
-        document.getElementById("answer-controls").classList.remove("hidden");
+    // Track this guess for the current note
+    state.currentNoteGuesses[mode] = {
+        guess: note,
+        correct: isCorrect,
+        hasRating: false
+    };
+
+    // Show feedback indicator for this mode
+    showModeFeedbackIndicator(mode, isCorrect);
+
+    // Disable the specific interface that was guessed
+    const interfaceElement = getInterfaceElement(mode);
+    if (interfaceElement) {
+        interfaceElement.classList.add('answered');
+    }
+
+    // Check if this was the last active mode to guess
+    const allModesGuessed = state.currentModes.every(m => state.currentNoteGuesses[m]);
+
+    if (allModesGuessed) {
+        // All modes have been guessed, disable all interfaces
+        disableGuessingInterfaces();
+        state.noteAnswered = true;
+
+        // Check if any guesses were correct
+        const hasCorrectGuess = Object.values(state.currentNoteGuesses).some(g => g.correct);
+
+        if (hasCorrectGuess) {
+            // Show assessment buttons for correct answers only
+            document.getElementById("assessment-buttons").classList.remove("hidden");
+            document.getElementById("answer-controls").classList.remove("hidden");
+        } else {
+            // All wrong, show correct answers for all modes and show next button
+            Object.keys(state.currentNoteGuesses).forEach(mode => {
+                if (mode !== 'keyboard') {
+                    showCorrectAnswer(mode, correctNote);
+                }
+            });
+            document.getElementById("next-controls").classList.remove("hidden");
+            document.getElementById("answer-controls").classList.remove("hidden");
+        }
     } else {
-        // Wrong answer: show only next button
-        document.getElementById("next-controls").classList.remove("hidden");
-        document.getElementById("answer-controls").classList.remove("hidden");
+        // More modes to guess, show mode-specific overlay only for correct answers
+        if (isCorrect) {
+            const overlay = getModeOverlay(mode);
+            if (overlay) {
+                // Position overlay to cover only the specific interface
+                positionOverlayOnInterface(overlay, interfaceElement);
+
+                // Show overlay with assessment buttons
+                const assessmentButtons = overlay.querySelector(`#${getModePrefix(mode)}-assessment-buttons`);
+                if (assessmentButtons) {
+                    assessmentButtons.classList.remove('hidden');
+                    overlay.classList.remove('hidden');
+                }
+            }
+        } else {
+            // Show correct answer for wrong guesses
+            if (mode !== 'keyboard') {
+                showCorrectAnswer(mode, correctNote);
+            }
+        }
     }
 
     // Update stats
     updateStats();
+}
+
+function showModeFeedbackIndicator(mode, isCorrect, hasRating = false) {
+    const feedbackId = mode === 'keyboard' ? 'keyboard-feedback' :
+                      mode === 'noteName' ? 'note-name-feedback' : 'staff-position-feedback';
+
+    const indicator = document.getElementById(feedbackId);
+    if (indicator) {
+        if (isCorrect) {
+            indicator.textContent = hasRating ? '✅' : '?';
+            indicator.title = hasRating ? 'Click to change difficulty rating' : 'Click to rate difficulty';
+        } else {
+            indicator.textContent = '❌';
+            indicator.title = 'Incorrect answer';
+        }
+        indicator.classList.remove('hidden', 'correct', 'incorrect');
+        indicator.classList.add(isCorrect ? 'correct' : 'incorrect');
+    }
+}
+
+function hideAllModeFeedbackIndicators() {
+    const indicators = ['keyboard-feedback', 'note-name-feedback', 'staff-position-feedback'];
+    indicators.forEach(id => {
+        const indicator = document.getElementById(id);
+        if (indicator) {
+            indicator.classList.add('hidden');
+            indicator.classList.remove('correct', 'incorrect');
+        }
+    });
+}
+
+function getInterfaceElement(mode) {
+    switch (mode) {
+        case 'keyboard':
+            return document.getElementById('piano');
+        case 'noteName':
+            return document.getElementById('note-name-interface');
+        case 'staffPosition':
+            return document.getElementById('staff-position-interface');
+        default:
+            return null;
+    }
+}
+
+function getModeOverlay(mode) {
+    switch (mode) {
+        case 'noteName':
+            return document.getElementById('note-name-overlay');
+        case 'staffPosition':
+            return document.getElementById('staff-position-overlay');
+        default:
+            return null;
+    }
+}
+
+function getModePrefix(mode) {
+    switch (mode) {
+        case 'noteName':
+            return 'note-name';
+        case 'staffPosition':
+            return 'staff-position';
+        default:
+            return mode;
+    }
+}
+
+function disableGuessingInterfaces() {
+    // Disable keyboard
+    document.querySelectorAll(".key").forEach(key => {
+        key.removeEventListener("click", handleKeyClick);
+    });
+
+    // Disable submit buttons and selection buttons
+    document.getElementById('note-name-submit').disabled = true;
+    document.getElementById('staff-position-submit').disabled = true;
+
+    // Disable all selection buttons
+    document.querySelectorAll('.selection-button').forEach(btn => {
+        btn.disabled = true;
+    });
+}
+
+function positionOverlayOnInterface(overlay, interfaceElement) {
+    // Get the interface element's position and size
+    const rect = interfaceElement.getBoundingClientRect();
+
+    // Position the overlay to cover exactly the interface
+    overlay.style.top = rect.top + 'px';
+    overlay.style.left = rect.left + 'px';
+    overlay.style.width = rect.width + 'px';
+    overlay.style.height = rect.height + 'px';
+
+    console.log(`Positioned overlay at:`, {
+        top: rect.top,
+        left: rect.left,
+        width: rect.width,
+        height: rect.height
+    });
+}
+
+function showCorrectAnswer(mode, correctNote) {
+    if (mode === 'noteName') {
+        showCorrectNoteNameAnswer(correctNote);
+    } else if (mode === 'staffPosition') {
+        showCorrectStaffPositionAnswer(correctNote);
+    }
+}
+
+function showCorrectNoteNameAnswer(correctNote) {
+    // Parse the correct note
+    const noteName = correctNote.slice(0, -1).replace(/[#b]/, ''); // Remove octave and accidental
+    const accidental = correctNote.includes('#') ? '#' : correctNote.includes('b') ? 'b' : '';
+
+    // Highlight the correct note letter
+    const correctNoteButton = document.querySelector(`#note-letter-buttons .selection-button[data-value="${noteName}"]`);
+    if (correctNoteButton) {
+        correctNoteButton.classList.add('correct-answer');
+    }
+
+    // Highlight the correct accidental if any
+    if (accidental) {
+        const correctAccidentalButton = document.querySelector(`#accidental-buttons .selection-button[data-value="${accidental}"]`);
+        if (correctAccidentalButton) {
+            correctAccidentalButton.classList.add('correct-answer');
+        }
+    }
+}
+
+function showCorrectStaffPositionAnswer(correctNote) {
+    const clef = state.currentNote.clef;
+    const staffPosition = getNoteStaffPosition(clef, correctNote);
+
+    if (staffPosition) {
+        const { position, lineSpace, aboveBelow, accidental } = staffPosition;
+
+        // Highlight correct position
+        const correctPositionButton = document.querySelector(`#position-buttons .selection-button[data-value="${position}"]`);
+        if (correctPositionButton) {
+            correctPositionButton.classList.add('correct-answer');
+        }
+
+        // Highlight correct line/space
+        const correctLineSpaceButton = document.querySelector(`#line-space-buttons .selection-button[data-value="${lineSpace}"]`);
+        if (correctLineSpaceButton) {
+            correctLineSpaceButton.classList.add('correct-answer');
+        }
+
+        // Highlight correct above/below if applicable
+        if (aboveBelow) {
+            const correctAboveBelowButton = document.querySelector(`#above-below-buttons .selection-button[data-value="${aboveBelow}"]`);
+            if (correctAboveBelowButton) {
+                correctAboveBelowButton.classList.add('correct-answer');
+            }
+        }
+
+        // Highlight correct accidental if applicable
+        if (accidental && accidental !== '') {
+            const correctAccidentalButton = document.querySelector(`#staff-accidental-buttons .selection-button[data-value="${accidental}"]`);
+            if (correctAccidentalButton) {
+                correctAccidentalButton.classList.add('correct-answer');
+            }
+        }
+    }
+}
+
+function getNoteStaffPosition(clef, note) {
+    // Parse note to get base note and accidental
+    const noteName = note.slice(0, -1).replace(/[#b]/, ''); // Remove octave and accidental
+    const accidental = note.includes('#') ? '#' : note.includes('b') ? 'b' : '';
+
+    // Reverse lookup from note to staff position
+    const treblePositions = {
+        'E': { position: 'bottom', lineSpace: 'line' },
+        'F': { position: 'bottom', lineSpace: 'space' },
+        'G': { position: 'second', lineSpace: 'line' },
+        'A': { position: 'second', lineSpace: 'space' },
+        'B': { position: 'middle', lineSpace: 'line' },
+        'C': { position: 'middle', lineSpace: 'space' },
+        'D': { position: 'fourth', lineSpace: 'line' },
+        // Note: this is simplified - would need to handle ledger lines above/below
+    };
+
+    const bassPositions = {
+        'G': { position: 'bottom', lineSpace: 'line' },
+        'A': { position: 'bottom', lineSpace: 'space' },
+        'B': { position: 'second', lineSpace: 'line' },
+        'C': { position: 'second', lineSpace: 'space' },
+        'D': { position: 'middle', lineSpace: 'line' },
+        'E': { position: 'middle', lineSpace: 'space' },
+        'F': { position: 'fourth', lineSpace: 'line' },
+        // Note: this is simplified - would need to handle ledger lines above/below
+    };
+
+    const positions = clef === 'treble' ? treblePositions : bassPositions;
+    const staffPos = positions[noteName];
+
+    if (staffPos) {
+        return {
+            position: staffPos.position,
+            lineSpace: staffPos.lineSpace,
+            aboveBelow: '', // Simplified - not handling ledger lines for now
+            accidental: accidental
+        };
+    }
+
+    return null;
 }
 
 function drawNote(clef, note) {
@@ -433,16 +1290,15 @@ function drawNote(clef, note) {
     if (!vexflowContainer) {
         vexflowContainer = document.createElement('div');
         vexflowContainer.id = 'vexflow-container';
-        vexflowContainer.style.position = 'absolute';
-        vexflowContainer.style.top = '0';
-        vexflowContainer.style.left = '0';
         vexflowContainer.style.width = '100%';
-        vexflowContainer.style.height = '100%';
+        vexflowContainer.style.flex = '1';
         vexflowContainer.style.display = 'flex';
         vexflowContainer.style.justifyContent = 'center';
         vexflowContainer.style.alignItems = 'center';
-        vexflowContainer.style.zIndex = '1';
-        musicScore.appendChild(vexflowContainer);
+        vexflowContainer.style.minHeight = '200px';
+        vexflowContainer.style.zIndex = '1'; // Lower z-index than modals
+        // Insert as first child so it appears above the guessing interfaces
+        musicScore.insertBefore(vexflowContainer, musicScore.firstChild);
     } else {
         vexflowContainer.innerHTML = '';
     }
@@ -536,7 +1392,7 @@ function createPiano(pianoContainer, startNote, endNote) {
 }
 
 function handleKeyClick(event) {
-    handleGuess(event.target.dataset.note);
+    handleGuess(event.target.dataset.note, 'keyboard');
 }
 
 function getNoteRange(start, end) {
@@ -573,13 +1429,32 @@ function isBlackKey(note) {
 
 function updateStats() {
     const user = state.users[state.currentUser];
-    const currentGuesses = user.currentSession.guesses;
-    const total = currentGuesses.length;
-    const correct = currentGuesses.filter(guess => guess.correct).length;
-    const percentage = total > 0 ? Math.round((correct / total) * 100) : 0;
-
     const statsDisplay = document.getElementById("stats-display");
-    statsDisplay.textContent = `${correct} / ${total} (${percentage}%)`;
+
+    // Calculate stats for each active mode
+    const modeStats = [];
+    const activeModes = ['keyboard', 'noteName', 'staffPosition'].filter(mode => {
+        const settingKey = mode === 'keyboard' ? 'enableKeyboardMode' :
+                          mode === 'noteName' ? 'enableNoteNameMode' : 'enableStaffPositionMode';
+        return user.settings[settingKey];
+    });
+
+    activeModes.forEach(mode => {
+        const modeGuesses = user.currentSession.modeGuesses[mode];
+        const total = modeGuesses.length;
+        const correct = modeGuesses.filter(guess => guess.correct).length;
+        const percentage = total > 0 ? Math.round((correct / total) * 100) : 0;
+
+        const modeLabel = mode === 'keyboard' ? 'K' :
+                         mode === 'noteName' ? 'N' : 'S';
+        modeStats.push(`${modeLabel}: ${correct}/${total} (${percentage}%)`);
+    });
+
+    if (modeStats.length > 0) {
+        statsDisplay.innerHTML = modeStats.join('<br>');
+    } else {
+        statsDisplay.textContent = '0 / 0 (0%)';
+    }
 }
 
 function resetSession() {
@@ -706,26 +1581,51 @@ function loadState() {
                 state.currentUser = "default";
             }
 
-            // Ensure user has all required properties
-            const user = state.users[state.currentUser];
-            if (!user.settings) {
-                user.settings = {
-                    bassClefRange: "B1-D4",
-                    trebleClefRange: "B3-D6",
-                    includeSharps: true,
-                    includeFlats: false,
-                };
-            }
-            if (!user.sessionHistory) {
-                user.sessionHistory = [];
-            }
-            if (!user.currentSession) {
-                user.currentSession = {
-                    startTime: null,
-                    endTime: null,
-                    guesses: [],
-                };
-            }
+            // Migrate all users to ensure they have the proper structure
+            Object.keys(state.users).forEach(userName => {
+                const user = state.users[userName];
+
+                if (!user.settings) {
+                    user.settings = {
+                        bassClefRange: "B1-D4",
+                        trebleClefRange: "B3-D6",
+                        includeSharps: true,
+                        includeFlats: false,
+                        enableKeyboardMode: true,
+                        enableNoteNameMode: false,
+                        enableStaffPositionMode: false,
+                    };
+                }
+                // Add new settings with defaults if they don't exist
+                if (user.settings.enableKeyboardMode === undefined) user.settings.enableKeyboardMode = true;
+                if (user.settings.enableNoteNameMode === undefined) user.settings.enableNoteNameMode = false;
+                if (user.settings.enableStaffPositionMode === undefined) user.settings.enableStaffPositionMode = false;
+
+                if (!user.sessionHistory) {
+                    user.sessionHistory = [];
+                }
+
+                if (!user.currentSession) {
+                    user.currentSession = {
+                        startTime: null,
+                        endTime: null,
+                        guesses: [],
+                        modeGuesses: {
+                            keyboard: [],
+                            noteName: [],
+                            staffPosition: []
+                        }
+                    };
+                }
+                // Ensure modeGuesses exists for existing sessions
+                if (!user.currentSession.modeGuesses) {
+                    user.currentSession.modeGuesses = {
+                        keyboard: [],
+                        noteName: [],
+                        staffPosition: []
+                    };
+                }
+            });
         }
     } catch (error) {
         console.error('Failed to load state from localStorage:', error);
@@ -741,6 +1641,9 @@ function initializeUIFromState() {
     document.getElementById("treble-clef-range").value = settings.trebleClefRange;
     document.getElementById("include-sharps").checked = settings.includeSharps;
     document.getElementById("include-flats").checked = settings.includeFlats;
+    document.getElementById("enable-keyboard-mode").checked = settings.enableKeyboardMode;
+    document.getElementById("enable-note-name-mode").checked = settings.enableNoteNameMode;
+    document.getElementById("enable-staff-position-mode").checked = settings.enableStaffPositionMode;
 
     // Update user dropdown
     populateUserDropdown();
@@ -798,12 +1701,20 @@ function setupUserManagement() {
                 trebleClefRange: "B3-D6",
                 includeSharps: true,
                 includeFlats: false,
+                enableKeyboardMode: true,
+                enableNoteNameMode: false,
+                enableStaffPositionMode: false,
             },
             sessionHistory: [],
             currentSession: {
                 startTime: null,
                 endTime: null,
                 guesses: [],
+                modeGuesses: {
+                    keyboard: [],
+                    noteName: [],
+                    staffPosition: []
+                }
             }
         };
 
