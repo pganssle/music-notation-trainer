@@ -1540,7 +1540,69 @@ function drawNote(clef, note) {
         const containerWidth = musicScore.clientWidth;
         const containerHeight = musicScore.clientHeight;
 
-        // Create a compact staff - just enough width for clef + note + time signature
+        // Get diatonic data first for all calculations
+        const diatonicData = noteToDiatonicIndex(note);
+        const clefReferences = {
+            treble: 30, // E4 bottom line
+            bass: 18   // G2 bottom line
+        };
+        const middleLineOffset = 2; // Middle line is 2 positions above bottom line
+        const middleLineDiatonic = clefReferences[clef] + middleLineOffset;
+
+        // Create the note first to calculate its position requirements
+        let vfNote = note.toLowerCase();
+        if (vfNote.includes('#')) {
+            vfNote = vfNote.replace('#', '#');
+        } else if (vfNote.includes('b')) {
+            vfNote = vfNote.replace('b', 'b');
+        }
+        // Split note name and octave
+        const noteName = vfNote.slice(0, -1);
+        const octave = vfNote.slice(-1);
+        const vfNoteString = `${noteName}/${octave}`;
+
+        // Calculate how many ledger lines this note needs
+        const calculateLedgerLines = (clef, noteName, octave) => {
+            const staffPositions = {
+                'treble': {
+                    // Staff lines from bottom to top: E4, G4, B4, D5, F5
+                    center: 4, // B4 is the middle line
+                    bottomLine: 2, // E4
+                    topLine: 6  // F5
+                },
+                'bass': {
+                    // Staff lines from bottom to top: G2, B2, D3, F3, A3
+                    center: 3, // D3 is the middle line
+                    bottomLine: 1, // G2
+                    topLine: 5  // A3
+                }
+            };
+
+            const noteNumbers = {
+                'c': 0, 'd': 1, 'e': 2, 'f': 3, 'g': 4, 'a': 5, 'b': 6
+            };
+
+            const staffInfo = staffPositions[clef];
+            if (!staffInfo) return 0;
+
+            // Calculate absolute note position (C4 = 40, D4 = 41, etc.)
+            const baseNote = noteName.charAt(0).toLowerCase();
+            const absolutePosition = (parseInt(octave) * 7) + noteNumbers[baseNote];
+
+            let referencePosition;
+            if (clef === 'treble') {
+                referencePosition = (4 * 7) + noteNumbers['b']; // B4 = 46
+            } else {
+                referencePosition = (3 * 7) + noteNumbers['d']; // D3 = 22
+            }
+
+            const positionDiff = absolutePosition - referencePosition;
+            return Math.max(0, Math.abs(positionDiff) - 2); // 2 staff lines in either direction before needing ledgers
+        };
+
+        const ledgerLinesNeeded = calculateLedgerLines(clef, noteName, parseInt(octave));
+
+        // Create a compact staff - adjust height based on note requirements
         const baseStaveWidth = 120; // Minimal width for clef, note, and time signature
         const baseHeight = 180; // Taller height to accommodate ledger lines above and below
 
@@ -1562,31 +1624,26 @@ function drawNote(clef, note) {
 
         // Create a compact stave - center it vertically in the canvas
         const staveY = (baseHeight - 100) / 2; // Center the staff vertically
+
         const stave = new Stave(20, staveY, baseStaveWidth);
         stave.addClef(clef)
         stave.setContext(context).draw();
 
-        // Create the note - convert format from "C4" to "c/4" for VexFlow
-        let vfNote = note.toLowerCase();
-        if (vfNote.includes('#')) {
-            vfNote = vfNote.replace('#', '#');
-        } else if (vfNote.includes('b')) {
-            vfNote = vfNote.replace('b', 'b');
-        }
-        // Split note name and octave
-        const noteName = vfNote.slice(0, -1);
-        const octave = vfNote.slice(-1);
-        const vfNoteString = `${noteName}/${octave}`;
+        // Determine stem direction based on diatonic staff position
+        const stemDown = diatonicData.diatonicIndex >= middleLineDiatonic;
 
         // Create notes
-        const notes = [
-            new StaveNote({
-                clef: clef,
-                keys: [vfNoteString],
-                duration: "q",
-                align_center: true,
-            })
-        ];
+        const staveNote = new StaveNote({
+            clef: clef,
+            keys: [vfNoteString],
+            duration: "q",
+            align_center: true
+        });
+
+        // Set stem direction using VexFlow's method
+        staveNote.setStemDirection(stemDown ? -1 : 1);
+
+        const notes = [staveNote];
 
         const voice = new Voice({ num_beats: 1, beat_value: 1 });
         voice.addTickables(notes);
