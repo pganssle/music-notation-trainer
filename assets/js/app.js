@@ -754,11 +754,11 @@ function updateGlobalFeedback() {
         const hasCorrect = Object.values(state.currentNoteGuesses).some(g => g.correct);
         const hasIncorrect = Object.values(state.currentNoteGuesses).some(g => !g.correct);
         if (hasCorrect && hasIncorrect) {
-            document.getElementById("feedback").textContent = "✅❌";
+            document.getElementById("feedback").innerHTML = '<i class="answer-icon correct fa"></i><i class="answer-icon incorrect fa"></i>';
         } else if (hasCorrect) {
-            document.getElementById("feedback").textContent = "✅";
+            document.getElementById("feedback").innerHTML = '<i class="answer-icon correct fa"></i>';
         } else if (hasIncorrect) {
-            document.getElementById("feedback").textContent = "❌";
+            document.getElementById("feedback").innerHTML = '<i class="answer-icon incorrect fa"></i>';
         }
     }
 }
@@ -1187,7 +1187,7 @@ function handleGuess(noteOrStaffPosition, mode = 'keyboard') {
     }
 
     // Show feedback
-    document.getElementById("feedback").textContent = isCorrect ? "✅" : "❌";
+    document.getElementById("feedback").innerHTML = isCorrect ? '<i class="answer-icon correct fa"></i>' : '<i class="answer-icon incorrect fa"></i>';
 
     // Enable standalone next button once any answer is given
     const standaloneNext = document.getElementById("standalone-next-button");
@@ -1290,10 +1290,10 @@ function showModeFeedbackIndicator(mode, isCorrect, hasRating = false) {
     const indicator = document.getElementById(feedbackId);
     if (indicator) {
         if (isCorrect) {
-            indicator.textContent = hasRating ? '✅' : '?';
+            indicator.innerHTML = hasRating ? '<i class="answer-icon correct fa"></i>' : '?';
             indicator.title = hasRating ? 'Click to change difficulty rating' : 'Click to rate difficulty';
         } else {
-            indicator.textContent = '❌';
+            indicator.innerHTML = '<i class="answer-icon incorrect fa"></i>';
             indicator.title = 'Incorrect answer';
         }
         indicator.classList.remove('hidden', 'correct', 'incorrect');

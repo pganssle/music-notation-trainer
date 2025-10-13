@@ -50,6 +50,7 @@ body {
 
 #piano-container {
     display: flex;
+    position: relative;
     justify-content: center;
     align-items: center;
     flex-grow: 0;
@@ -446,7 +447,8 @@ body {
 .mode-feedback-indicator {
     position: absolute;
     right: 1em;
-    font-size: 2em;
+    top: 0;
+    font-size: 4em;
     z-index: 10;
     cursor: pointer;
     display: flex;
@@ -462,4 +464,24 @@ body {
 
 .mode-feedback-indicator.hidden {
     display: none;
+}
+
+i.answer-icon.correct {
+    color: green;
+}
+
+i.answer-icon.correct:before {
+    content: "\f00c";
+    -webkit-text-stroke-width: 2px;
+    -webkit-text-stroke-color: black;
+}
+
+i.answer-icon.incorrect {
+    color: red;
+}
+
+i.answer-icon.incorrect:before {
+    content: "\f00d";
+    -webkit-text-stroke-width: 2px;
+    -webkit-text-stroke-color: black;
 }
