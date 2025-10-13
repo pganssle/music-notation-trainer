@@ -1581,60 +1581,21 @@ function drawNote(clef, note) {
         const octave = vfNote.slice(-1);
         const vfNoteString = `${noteName}/${octave}`;
 
-        // Calculate how many ledger lines this note needs
-        const calculateLedgerLines = (clef, noteName, octave) => {
-            const staffPositions = {
-                'treble': {
-                    // Staff lines from bottom to top: E4, G4, B4, D5, F5
-                    center: 4, // B4 is the middle line
-                    bottomLine: 2, // E4
-                    topLine: 6  // F5
-                },
-                'bass': {
-                    // Staff lines from bottom to top: G2, B2, D3, F3, A3
-                    center: 3, // D3 is the middle line
-                    bottomLine: 1, // G2
-                    topLine: 5  // A3
-                }
-            };
+        // Use a fixed container height (30dvh equivalent in pixels)
+        const fixedContainerHeight = Math.min(containerHeight, window.innerHeight * 0.3);
 
-            const noteNumbers = {
-                'c': 0, 'd': 1, 'e': 2, 'f': 3, 'g': 4, 'a': 5, 'b': 6
-            };
-
-            const staffInfo = staffPositions[clef];
-            if (!staffInfo) return 0;
-
-            // Calculate absolute note position (C4 = 40, D4 = 41, etc.)
-            const baseNote = noteName.charAt(0).toLowerCase();
-            const absolutePosition = (parseInt(octave) * 7) + noteNumbers[baseNote];
-
-            let referencePosition;
-            if (clef === 'treble') {
-                referencePosition = (4 * 7) + noteNumbers['b']; // B4 = 46
-            } else {
-                referencePosition = (3 * 7) + noteNumbers['d']; // D3 = 22
-            }
-
-            const positionDiff = absolutePosition - referencePosition;
-            return Math.max(0, Math.abs(positionDiff) - 2); // 2 staff lines in either direction before needing ledgers
-        };
-
-        const ledgerLinesNeeded = calculateLedgerLines(clef, noteName, parseInt(octave));
-
-        // Create a compact staff - adjust height based on note requirements
+        // Create a compact staff with fixed dimensions
         const baseStaveWidth = 120; // Minimal width for clef, note, and time signature
         const baseStaffHeight = 100; // Height of just the staff
-        const ledgerLineSpace = 10; // Additional space per ledger line
-        const baseHeight = baseStaffHeight + (ledgerLinesNeeded * ledgerLineSpace * 2); // Space above and below
+        const totalCanvasHeight = 180; // Fixed canvas height to accommodate 3 ledger lines above/below
 
         // Calculate scale factor to fit container while maintaining aspect ratio
         const scaleX = (containerWidth - 40) / (baseStaveWidth + 40);
-        const scaleY = (containerHeight - 100) / baseHeight; // Leave space for controls
+        const scaleY = fixedContainerHeight / totalCanvasHeight; // Scale to fit fixed height
         const scale = Math.min(scaleX, scaleY, 3); // Cap maximum scale at 3x
 
         const scaledWidth = (baseStaveWidth + 40) * scale;
-        const scaledHeight = baseHeight * scale;
+        const scaledHeight = totalCanvasHeight * scale;
 
         // Create VexFlow renderer
         const renderer = new Renderer(vexflowContainer, Renderer.Backends.SVG);
@@ -1652,17 +1613,17 @@ function drawNote(clef, note) {
         // Apply scaling to the context
         context.scale(scale, scale);
 
-        // Position staff off-center based on note position
-        // If note is high, move staff down; if note is low, move staff up
-        const isNoteHigh = (clef, noteName, octave) => {
-            if (clef === 'treble') return octave > 4 || (octave === 4 && ['b', 'a', 'g'].includes(noteName.charAt(0)));
-            if (clef === 'bass') return octave > 3 || (octave === 3 && ['a', 'g', 'f', 'e'].includes(noteName.charAt(0)));
-            return false;
-        };
+        // Position staff within the fixed canvas based on note position
+        // Calculate how far the note is from the staff center
+        const staffPositionOffset = diatonicData.diatonicIndex - middleLineDiatonic;
+        const pixelsPerStaffPosition = 5; // VexFlow uses ~5 pixels per staff position
 
-        const noteIsHigh = isNoteHigh(clef, noteName, parseInt(octave));
-        const staffOffset = noteIsHigh ? (ledgerLinesNeeded * 5) : -(ledgerLinesNeeded * 5);
-        const staveY = (baseHeight - baseStaffHeight) / 2 + staffOffset;
+        // Center the staff, then adjust based on note position
+        // If note is high above staff, move staff down to show it
+        // If note is low below staff, move staff up to show it
+        const centerY = totalCanvasHeight / 2;
+        const staffAdjustment = -staffPositionOffset * pixelsPerStaffPosition; // Negative to move staff opposite to note
+        const staveY = Math.max(20, Math.min(centerY + staffAdjustment, totalCanvasHeight - baseStaffHeight - 20));
 
         const stave = new Stave(20, staveY, baseStaveWidth);
         stave.addClef(clef)
