@@ -1,4 +1,5 @@
-import { Factory } from 'vexflow';
+import { Accidental, Factory, Renderer, Stave, StaveNote, Voice, Formatter } from 'vexflow';
+import 'fork-awesome/css/fork-awesome.css';
 
 const state = {
     currentUser: "default",
@@ -299,18 +300,59 @@ function handleGuess(note) {
     // Show self-assessment buttons
     const selfAssessment = document.getElementById("self-assessment");
     selfAssessment.classList.remove("hidden");
+
+    // Update stats
+    updateStats();
 }
 
 function drawNote(clef, note) {
     const musicScore = document.getElementById("music-score");
     musicScore.innerHTML = "";
-    const vf = new Factory({ renderer: { elementId: 'music-score' } });
-    const score = vf.EasyScore();
-    const system = vf.System();
-    system.addStave({
-        voices: [score.voice(score.notes(`${note}/q`, { clef: clef }))]
-    }).addClef(clef).addTimeSignature('4/4');
-    vf.draw();
+
+    try {
+        // Create VexFlow renderer
+        const renderer = new Renderer(musicScore, Renderer.Backends.SVG);
+        renderer.resize(400, 200);
+        const context = renderer.getContext();
+
+        // Create a stave
+        const stave = new Stave(10, 40, 350);
+        stave.addClef(clef).addTimeSignature("1/4");
+        stave.setContext(context).draw();
+
+        // Create the note - convert format from "C4" to "c/4" for VexFlow
+        let vfNote = note.toLowerCase();
+        if (vfNote.includes('#')) {
+            vfNote = vfNote.replace('#', '#');
+        }
+        // Split note name and octave
+        const noteName = vfNote.slice(0, -1);
+        const octave = vfNote.slice(-1);
+        const vfNoteString = `${noteName}/${octave}`;
+
+        // Create notes
+        const notes = [
+            new StaveNote({
+                clef: clef,
+                keys: [vfNoteString],
+                duration: "q"
+            })
+        ];
+
+        const voice = new Voice({ num_beats: 1, beat_value: 4 });
+        voice.addTickables(notes);
+        voice.setStrict(false); // Allow less than 4 notes
+        Accidental.applyAccidentals([voice], `C`);
+
+        // Format and justify the notes to 300 pixels
+        const formatter = new Formatter().joinVoices([voice]).format([voice]);//, 300);
+
+        // Render voice
+        voice.draw(context, stave);
+    } catch (error) {
+        console.error("VexFlow rendering error:", error);
+        musicScore.innerHTML = `<p style="color: red; padding: 20px;">Error rendering note: ${note} on ${clef} clef<br>Error: ${error.message}</p>`;
+    }
 }
 
 function createPiano(pianoContainer, startNote, endNote) {
