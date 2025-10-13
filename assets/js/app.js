@@ -1265,7 +1265,8 @@ function showModeFeedbackIndicator(mode, isCorrect, hasRating = false) {
     const indicator = document.getElementById(feedbackId);
     if (indicator) {
         if (isCorrect) {
-            indicator.innerHTML = hasRating ? '<i class="answer-icon correct fa"></i>' : '?';
+            // TODO: Instead toggle correct/incorrect on an existing element
+            indicator.innerHTML = '<i class="answer-icon correct fa"></i>';
             indicator.title = hasRating ? 'Click to change difficulty rating' : 'Click to rate difficulty';
         } else {
             indicator.innerHTML = '<i class="answer-icon incorrect fa"></i>';
