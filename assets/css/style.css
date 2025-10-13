@@ -35,13 +35,6 @@ body {
   align-items: center;
 }
 
-.side-panel {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  border: 1px solid #ccc;
-}
-
 #settings, #stats {
   flex: 1;
   border: 1px solid #ccc;
@@ -237,7 +230,7 @@ body {
     z-index: 10;
 }
 
-#floating-controls i {
+#floating-controls i,button {
     cursor: pointer;
     font-size: 1.5em;
     color: #666;
@@ -247,7 +240,12 @@ body {
     border: 1px solid #ccc;
 }
 
-#floating-controls i:hover {
+#floating-controls button:disabled {
+    background-color: #888;
+    cursor: default;
+}
+
+#floating-controls i:hover, button:hover:enabled {
     color: #333;
     background-color: #f0f0f0;
 }

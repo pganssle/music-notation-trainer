@@ -686,7 +686,6 @@ function undoLastGuessForCurrentNote() {
 
         // Update stats and feedback
         updateStats();
-        updateGlobalFeedback();
     }
 }
 
@@ -744,25 +743,6 @@ function getModeUIFeedbackId(mode) {
     }
 }
 
-function updateGlobalFeedback() {
-    // Update the main feedback based on remaining guesses
-    const hasAnyGuess = Object.keys(state.currentNoteGuesses).length > 0;
-    if (!hasAnyGuess) {
-        document.getElementById("feedback").textContent = "";
-    } else {
-        // Show general feedback if there are still guesses
-        const hasCorrect = Object.values(state.currentNoteGuesses).some(g => g.correct);
-        const hasIncorrect = Object.values(state.currentNoteGuesses).some(g => !g.correct);
-        if (hasCorrect && hasIncorrect) {
-            document.getElementById("feedback").innerHTML = '<i class="answer-icon correct fa"></i><i class="answer-icon incorrect fa"></i>';
-        } else if (hasCorrect) {
-            document.getElementById("feedback").innerHTML = '<i class="answer-icon correct fa"></i>';
-        } else if (hasIncorrect) {
-            document.getElementById("feedback").innerHTML = '<i class="answer-icon incorrect fa"></i>';
-        }
-    }
-}
-
 function resetAllInterfacesAndState() {
     // Reset all interface states
     resetNoteNameInterface();
@@ -779,7 +759,6 @@ function resetAllInterfacesAndState() {
     state.noteAnswered = false;
 
     // Reset UI elements
-    document.getElementById("feedback").textContent = "";
     document.getElementById("assessment-buttons").classList.add("hidden");
     document.getElementById("next-controls").classList.add("hidden");
     document.getElementById("answer-controls").classList.add("hidden");
@@ -807,7 +786,6 @@ function startNewRound() {
     document.querySelectorAll(".key").forEach(key => {
         key.classList.remove("correct", "incorrect");
     });
-    document.getElementById("feedback").textContent = "";
 
     // Clear correct answer highlights from all selection buttons
     document.querySelectorAll(".selection-button").forEach(button => {
@@ -1185,9 +1163,6 @@ function handleGuess(noteOrStaffPosition, mode = 'keyboard') {
             }
         }
     }
-
-    // Show feedback
-    document.getElementById("feedback").innerHTML = isCorrect ? '<i class="answer-icon correct fa"></i>' : '<i class="answer-icon incorrect fa"></i>';
 
     // Enable standalone next button once any answer is given
     const standaloneNext = document.getElementById("standalone-next-button");
@@ -1769,7 +1744,6 @@ function resetSession() {
 
     // Reset UI
     updateStats();
-    document.getElementById("feedback").textContent = "";
     startNewRound();
 }
 

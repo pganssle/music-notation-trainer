@@ -7,6 +7,7 @@ layout: default
       <div id="floating-controls">
         <i class="fa fa-undo" id="undo-button" title="Back"></i>
         <i class="fa fa-refresh" id="reset-session-button" title="Reset Session"></i>
+        <button class="fa fa-arrow-right" id="standalone-next-button" class="submit-button" disabled></i>
       </div>
       <div id="floating-buttons">
         <i class="fa fa-line-chart" id="history-button"></i>
@@ -39,7 +40,7 @@ layout: default
                   <span class="submit-arrow">→</span>
                 </button>
               </div>
-            </div>
+          </div>
         </div>
 
         <!-- Staff Position Guessing Interface -->
@@ -83,6 +84,7 @@ layout: default
           </div>
         </div>
       </div>
+    </div>
 
       <!-- Modal overlays - outside the interfaces so they don't get disabled -->
       <div class="mode-answer-overlay hidden" id="note-name-overlay">
@@ -117,15 +119,10 @@ layout: default
             <button id="next-button">Next</button>
           </div>
       </div>
-    </div>
-    <div class="side-panel">
-      <div id="stats" class="panel">
+    <div id="stats" class="panel">
         <div id="stats-widget">
             <span id="stats-display">0 / 0 (0%)</span>
         </div>
-        <div id="feedback"></div>
-        <button id="standalone-next-button" class="submit-button" disabled style="margin-top: 10px; width: 100%;">Next</button>
-      </div>
     </div>
   </div>
   <div id="piano-container">
