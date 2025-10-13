@@ -26,6 +26,14 @@ body {
   align-items: center;
 }
 
+#vexflow-container {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
 .side-panel {
   flex: 1;
   display: flex;

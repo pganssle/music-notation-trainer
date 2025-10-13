@@ -54,6 +54,22 @@ document.addEventListener("DOMContentLoaded", function() {
     }
 });
 
+// Add resize handler for responsive VexFlow canvas
+let resizeTimeout;
+let currentNote = null;
+let currentClef = null;
+
+function handleResize() {
+    if (currentNote && currentClef) {
+        drawNote(currentClef, currentNote);
+    }
+}
+
+window.addEventListener('resize', () => {
+    clearTimeout(resizeTimeout);
+    resizeTimeout = setTimeout(handleResize, 150); // Debounce resize events
+});
+
 function init() {
     // Initialize current session if not started
     const user = state.users[state.currentUser];
@@ -1522,6 +1538,10 @@ function compareNoteStaffPositions(position1, position2) {
 }
 
 function drawNote(clef, note) {
+    // Store current note and clef for resize handling
+    currentNote = note;
+    currentClef = clef;
+
     const musicScore = document.getElementById("music-score");
 
     // Create or get the VexFlow container
@@ -1536,9 +1556,9 @@ function drawNote(clef, note) {
     }
 
     try {
-        // Get container dimensions
-        const containerWidth = musicScore.clientWidth;
-        const containerHeight = musicScore.clientHeight;
+        // Get container dimensions with minimum constraints
+        const containerWidth = Math.max(musicScore.clientWidth, 200);
+        const containerHeight = Math.max(musicScore.clientHeight, 150);
 
         // Get diatonic data first for all calculations
         const diatonicData = noteToDiatonicIndex(note);
@@ -1620,6 +1640,14 @@ function drawNote(clef, note) {
         const renderer = new Renderer(vexflowContainer, Renderer.Backends.SVG);
         renderer.resize(scaledWidth, scaledHeight);
         const context = renderer.getContext();
+
+        // Make SVG responsive
+        const svg = vexflowContainer.querySelector('svg');
+        if (svg) {
+            svg.setAttribute('viewBox', `0 0 ${scaledWidth} ${scaledHeight}`);
+            svg.setAttribute('preserveAspectRatio', 'xMidYMid meet');
+            svg.style.cssText = 'width: 100%; height: 100%; max-width: 100%; max-height: 100%;';
+        }
 
         // Apply scaling to the context
         context.scale(scale, scale);
