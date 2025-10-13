@@ -278,6 +278,7 @@ body {
     flex-direction: column;
     gap: 0.5em;
     position: relative;
+    height: 15dvh;
 }
 
 .guessing-interface div.choice-row {
