@@ -27,10 +27,17 @@ document.addEventListener("DOMContentLoaded", function() {
 });
 
 function init() {
+    // Initialize current session if not started
+    const user = state.users[state.currentUser];
+    if (!user.currentSession.startTime) {
+        user.currentSession.startTime = Date.now();
+    }
+
     const piano = document.getElementById("piano");
     const startNote = "B1";
     const endNote = "D6";
     createPiano(piano, startNote, endNote);
+    updateStats();
     startNewRound();
 
     const settingsModal = document.getElementById("settings-modal");
@@ -105,6 +112,12 @@ function init() {
         console.log("Next button clicked");
         startNewRound();
     });
+
+    const resetButton = document.getElementById("reset-session-button");
+    resetButton.addEventListener("click", () => {
+        resetSession();
+    });
+
 
     if ('serviceWorker' in navigator) {
         window.addEventListener('load', () => {
@@ -354,4 +367,37 @@ function getNoteRange(start, end) {
 
 function isBlackKey(note) {
   return note.includes("#");
+}
+
+function updateStats() {
+    const user = state.users[state.currentUser];
+    const currentGuesses = user.currentSession.guesses;
+    const total = currentGuesses.length;
+    const correct = currentGuesses.filter(guess => guess.correct).length;
+    const percentage = total > 0 ? Math.round((correct / total) * 100) : 0;
+
+    const statsDisplay = document.getElementById("stats-display");
+    statsDisplay.textContent = `${correct} / ${total} (${percentage}%)`;
+}
+
+function resetSession() {
+    const user = state.users[state.currentUser];
+
+    // Save current session to history if it has guesses
+    if (user.currentSession.guesses.length > 0) {
+        user.currentSession.endTime = Date.now();
+        user.sessionHistory.push({ ...user.currentSession });
+    }
+
+    // Start new session
+    user.currentSession = {
+        startTime: Date.now(),
+        endTime: null,
+        guesses: []
+    };
+
+    // Reset UI
+    updateStats();
+    document.getElementById("feedback").textContent = "";
+    startNewRound();
 }
