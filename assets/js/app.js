@@ -1478,9 +1478,9 @@ function getStaffPositionFromDiatonicIndex(clef, diatonicIndex, accidental = '')
     let lineSpace = (diatonicIndex % 2 === 0) ? 'line' : 'space';
     let position;
 
-    if (staffPosition < 0 || staffPosition > positionNames.length) {
+    if (staffPosition < 0 || staffPosition >= positionNames.length) {
         let count;
-        if (staffPosition > positionNames.length) {
+        if (staffPosition >= positionNames.length) {
             aboveBelow = 'above';
             count = staffPosition - positionNames.length + 1;
         } else {
