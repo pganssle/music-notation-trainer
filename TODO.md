@@ -2,17 +2,23 @@
 
 ## Short term
 
-- [ ] 1st space above is still wrong for some reason
 - [ ] When keyboard mode goes first it is auto-advancing
-- [ ] Change "correct" and "incorrect" to the same indicators we are using in CIM
+- [ ] Disable zooming
+- [ ] Make it possible to disable bass and treble clefs
 - [ ] Fix session history display to show all three types of stats
+- [ ] Fix duration in session history to be the minimum duration from first rated to last rated
+- [ ] Add "Bass" and "Treble" clef as optional selector in staff position mode
 - [ ] Clicking the correct / incorrect indicator should allow changing difficulty assessment
-- [ ] Refactor interface
+- [ ] Refactor user switching to be more like CIM
+- [ ] Move "x" button in modals to float in the top right
+- [X] 1st space above is still wrong for some reason
+- [X] Change "correct" and "incorrect" to the same indicators we are using in CIM
+- [X] Refactor interface
     - [X] Settings indicator should be a gear
     - [X] Session history icon should be a chart, move it to next to the other floating icons
-    - [ ] Remove settings panel and move it into a gear icon next to the "undo" and "reset" buttons
-    - [ ] Move stats display to be to the right of the staff
-    - [ ] Move note name and staff position responses to above the keyboard
+    - [X] Remove settings panel and move it into a gear icon next to the "undo" and "reset" buttons
+    - [X] Move stats display to be to the right of the staff
+    - [X] Move note name and staff position responses to above the keyboard
 - [ ] Reduce vexflow whitespace:
     - [X] Automatically set the stem direction to try to minimize distance above/below staff
     - [ ] Reposition staff within the canvas when the staff gets taller (rather than generating a canvas big enough to contain the entire staff always)
