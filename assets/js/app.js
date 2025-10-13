@@ -1587,14 +1587,14 @@ function drawNote(clef, note) {
         // Create a compact staff with fixed dimensions
         const baseStaveWidth = 120; // Minimal width for clef, note, and time signature
         const baseStaffHeight = 100; // Height of just the staff
-        const totalCanvasHeight = 180; // Fixed canvas height to accommodate 3 ledger lines above/below
+        const totalCanvasHeight = 120; // Fixed canvas height to accommodate 3 ledger lines above/below
 
         // Calculate scale factor to fit container while maintaining aspect ratio
         const scaleX = (containerWidth - 40) / (baseStaveWidth + 40);
         const scaleY = fixedContainerHeight / totalCanvasHeight; // Scale to fit fixed height
         const scale = Math.min(scaleX, scaleY, 3); // Cap maximum scale at 3x
 
-        const scaledWidth = (baseStaveWidth + 40) * scale;
+        const scaledWidth = (baseStaveWidth + 20) * scale;
         const scaledHeight = totalCanvasHeight * scale;
 
         // Create VexFlow renderer
@@ -1613,19 +1613,7 @@ function drawNote(clef, note) {
         // Apply scaling to the context
         context.scale(scale, scale);
 
-        // Position staff within the fixed canvas based on note position
-        // Calculate how far the note is from the staff center
-        const staffPositionOffset = diatonicData.diatonicIndex - middleLineDiatonic;
-        const pixelsPerStaffPosition = 5; // VexFlow uses ~5 pixels per staff position
-
-        // Center the staff, then adjust based on note position
-        // If note is high above staff, move staff down to show it
-        // If note is low below staff, move staff up to show it
-        const centerY = totalCanvasHeight / 2;
-        const staffAdjustment = -staffPositionOffset * pixelsPerStaffPosition; // Negative to move staff opposite to note
-        const staveY = Math.max(20, Math.min(centerY + staffAdjustment, totalCanvasHeight - baseStaffHeight - 20));
-
-        const stave = new Stave(20, staveY, baseStaveWidth);
+        const stave = new Stave(20, 0, baseStaveWidth);
         stave.addClef(clef)
         stave.setContext(context).draw();
 
