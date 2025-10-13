@@ -1604,7 +1604,9 @@ function drawNote(clef, note) {
 
         // Create a compact staff - adjust height based on note requirements
         const baseStaveWidth = 120; // Minimal width for clef, note, and time signature
-        const baseHeight = 180; // Taller height to accommodate ledger lines above and below
+        const baseStaffHeight = 100; // Height of just the staff
+        const ledgerLineSpace = 10; // Additional space per ledger line
+        const baseHeight = baseStaffHeight + (ledgerLinesNeeded * ledgerLineSpace * 2); // Space above and below
 
         // Calculate scale factor to fit container while maintaining aspect ratio
         const scaleX = (containerWidth - 40) / (baseStaveWidth + 40);
@@ -1622,8 +1624,17 @@ function drawNote(clef, note) {
         // Apply scaling to the context
         context.scale(scale, scale);
 
-        // Create a compact stave - center it vertically in the canvas
-        const staveY = (baseHeight - 100) / 2; // Center the staff vertically
+        // Position staff off-center based on note position
+        // If note is high, move staff down; if note is low, move staff up
+        const isNoteHigh = (clef, noteName, octave) => {
+            if (clef === 'treble') return octave > 4 || (octave === 4 && ['b', 'a', 'g'].includes(noteName.charAt(0)));
+            if (clef === 'bass') return octave > 3 || (octave === 3 && ['a', 'g', 'f', 'e'].includes(noteName.charAt(0)));
+            return false;
+        };
+
+        const noteIsHigh = isNoteHigh(clef, noteName, parseInt(octave));
+        const staffOffset = noteIsHigh ? (ledgerLinesNeeded * 5) : -(ledgerLinesNeeded * 5);
+        const staveY = (baseHeight - baseStaffHeight) / 2 + staffOffset;
 
         const stave = new Stave(20, staveY, baseStaveWidth);
         stave.addClef(clef)
