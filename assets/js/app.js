@@ -1723,8 +1723,8 @@ function updateStats() {
         const correct = modeGuesses.filter(guess => guess.correct).length;
         const percentage = total > 0 ? Math.round((correct / total) * 100) : 0;
 
-        const modeLabel = mode === 'keyboard' ? 'K' :
-                         mode === 'noteName' ? 'N' : 'S';
+        const modeLabel = mode === 'keyboard' ? '🎹' :
+                         mode === 'noteName' ? '🎶' : '🎼';
         modeStats.push(`${modeLabel}: ${correct}/${total} (${percentage}%)`);
     });
 
