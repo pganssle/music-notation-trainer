@@ -3,88 +3,16 @@ layout: default
 ---
 <div class="container">
   <div class="top-row">
-    <div id="music-score" class="panel">
-      <div id="floating-controls">
+    <div id="floating-controls">
         <i class="fa fa-undo" id="undo-button" title="Back"></i>
         <i class="fa fa-refresh" id="reset-session-button" title="Reset Session"></i>
         <button class="fa fa-arrow-right" id="standalone-next-button" class="submit-button" disabled></i>
-      </div>
-      <div id="floating-buttons">
+    </div>
+    <div id="floating-buttons">
         <i class="fa fa-line-chart" id="history-button"></i>
         <i class="fa fa-gear" id="settings-button"></i>
-      </div>
-      <div id="guessing-interfaces">
-        <!-- Note Name Guessing Interface -->
-        <div id="note-name-interface" class="guessing-interface hidden">
-          <div class="mode-feedback-indicator hidden" id="note-name-feedback"></div>
-          <div class="choice-row">
-              <div class="selection-row">
-                <div class="selection-buttons" id="note-letter-buttons">
-                  <button class="selection-button" data-value="C">C</button>
-                  <button class="selection-button" data-value="D">D</button>
-                  <button class="selection-button" data-value="E">E</button>
-                  <button class="selection-button" data-value="F">F</button>
-                  <button class="selection-button" data-value="G">G</button>
-                  <button class="selection-button" data-value="A">A</button>
-                  <button class="selection-button" data-value="B">B</button>
-                </div>
-              </div>
-              <div class="selection-row">
-                <div class="selection-buttons" id="accidental-buttons">
-                  <button class="selection-button" data-value="#">Sharp</button>
-                  <button class="selection-button" data-value="b">Flat</button>
-                </div>
-              </div>
-              <div style="text-align: center;">
-                <button id="note-name-submit" class="submit-button" disabled>
-                  <span class="submit-arrow">→</span>
-                </button>
-              </div>
-          </div>
-        </div>
-
-        <!-- Staff Position Guessing Interface -->
-        <div id="staff-position-interface" class="guessing-interface hidden">
-          <div class="mode-feedback-indicator hidden" id="staff-position-feedback"></div>
-          <div class="choice-row">
-              <div class="selection-row">
-                <div class="selection-buttons" id="position-buttons">
-                  <button class="selection-button" data-value="1st">1st</button>
-                  <button class="selection-button" data-value="2nd">2nd</button>
-                  <button class="selection-button" data-value="3rd">3rd</button>
-                  <button class="selection-button" data-value="4th">4th</button>
-                  <button class="selection-button" data-value="bottom">Bottom</button>
-                  <button class="selection-button" data-value="middle">Middle</button>
-                  <button class="selection-button" data-value="top">Top</button>
-                </div>
-              </div>
-              <div class="selection-row" id="line-space-buttons">
-                  <button class="selection-button" data-value="line">Line</button>
-                  <button class="selection-button" data-value="space">Space</button>
-            </div>
-          </div>
-          <div class="choice-row">
-              <div class="selection-row">
-                <div class="selection-buttons" id="above-below-buttons">
-                  <button class="selection-button" data-value="above">Above</button>
-                  <button class="selection-button" data-value="below">Below</button>
-                </div>
-              </div>
-              <div class="selection-row">
-                <div class="selection-buttons" id="staff-accidental-buttons">
-                  <button class="selection-button" data-value="#">Sharp</button>
-                  <button class="selection-button" data-value="b">Flat</button>
-                </div>
-              </div>
-              <div style="text-align: center;">
-                <button id="staff-position-submit" class="submit-button" disabled>
-                  <span class="submit-arrow">→</span>
-                </button>
-              </div>
-          </div>
-        </div>
-      </div>
     </div>
+    <div id="music-score" class="panel"></div>
 
       <!-- Modal overlays - outside the interfaces so they don't get disabled -->
       <div class="mode-answer-overlay hidden" id="note-name-overlay">
@@ -123,6 +51,77 @@ layout: default
         <div id="stats-widget">
             <span id="stats-display">0 / 0 (0%)</span>
         </div>
+    </div>
+  </div>
+  <div id="guessing-interfaces">
+    <!-- Note Name Guessing Interface -->
+    <div id="note-name-interface" class="guessing-interface hidden">
+      <div class="mode-feedback-indicator hidden" id="note-name-feedback"></div>
+      <div class="choice-row">
+          <div class="selection-row">
+            <div class="selection-buttons" id="note-letter-buttons">
+              <button class="selection-button" data-value="C">C</button>
+              <button class="selection-button" data-value="D">D</button>
+              <button class="selection-button" data-value="E">E</button>
+              <button class="selection-button" data-value="F">F</button>
+              <button class="selection-button" data-value="G">G</button>
+              <button class="selection-button" data-value="A">A</button>
+              <button class="selection-button" data-value="B">B</button>
+            </div>
+          </div>
+          <div class="selection-row">
+            <div class="selection-buttons" id="accidental-buttons">
+              <button class="selection-button" data-value="#">Sharp</button>
+              <button class="selection-button" data-value="b">Flat</button>
+            </div>
+          </div>
+          <div style="text-align: center;">
+            <button id="note-name-submit" class="submit-button" disabled>
+              <span class="submit-arrow">→</span>
+            </button>
+          </div>
+      </div>
+    </div>
+
+    <!-- Staff Position Guessing Interface -->
+    <div id="staff-position-interface" class="guessing-interface hidden">
+      <div class="mode-feedback-indicator hidden" id="staff-position-feedback"></div>
+      <div class="choice-row">
+          <div class="selection-row">
+            <div class="selection-buttons" id="position-buttons">
+              <button class="selection-button" data-value="1st">1st</button>
+              <button class="selection-button" data-value="2nd">2nd</button>
+              <button class="selection-button" data-value="3rd">3rd</button>
+              <button class="selection-button" data-value="4th">4th</button>
+              <button class="selection-button" data-value="bottom">Bottom</button>
+              <button class="selection-button" data-value="middle">Middle</button>
+              <button class="selection-button" data-value="top">Top</button>
+            </div>
+          </div>
+          <div class="selection-row" id="line-space-buttons">
+              <button class="selection-button" data-value="line">Line</button>
+              <button class="selection-button" data-value="space">Space</button>
+        </div>
+      </div>
+      <div class="choice-row">
+          <div class="selection-row">
+            <div class="selection-buttons" id="above-below-buttons">
+              <button class="selection-button" data-value="above">Above</button>
+              <button class="selection-button" data-value="below">Below</button>
+            </div>
+          </div>
+          <div class="selection-row">
+            <div class="selection-buttons" id="staff-accidental-buttons">
+              <button class="selection-button" data-value="#">Sharp</button>
+              <button class="selection-button" data-value="b">Flat</button>
+            </div>
+          </div>
+          <div style="text-align: center;">
+            <button id="staff-position-submit" class="submit-button" disabled>
+              <span class="submit-arrow">→</span>
+            </button>
+          </div>
+      </div>
     </div>
   </div>
   <div id="piano-container">
