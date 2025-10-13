@@ -53,7 +53,7 @@ body {
     justify-content: center;
     align-items: center;
     flex-grow: 0;
-    min-height: 205px;
+    height: 30dvh;
 }
 
 #piano {
@@ -278,7 +278,7 @@ body {
     flex-direction: column;
     gap: 0.5em;
     position: relative;
-    height: 15dvh;
+    max-height: 15dvh;
 }
 
 .guessing-interface div.choice-row {
