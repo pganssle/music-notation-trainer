@@ -161,16 +161,6 @@ body {
     font-size: 1.5em;
 }
 
-#reset-session-button, #history-button {
-    cursor: pointer;
-    margin-left: 10px;
-}
-
-#history-button {
-    font-size: 2em;
-    margin-top: 10px;
-}
-
 #vexflow-container {
     width: 100%;
     display: flex;
@@ -261,6 +251,29 @@ body {
     color: #333;
     background-color: #f0f0f0;
 }
+
+#floating-buttons {
+    position: absolute;
+    top: 0.5em;
+    right: 1em;
+    display: flex;
+    gap: 0.5em;
+    z-index: 10;
+}
+
+#floating-buttons i {
+    cursor: pointer;
+    font-size: 2em;
+    color: #666;
+    padding: 0.5em;
+    border-radius: 4px;
+}
+
+#floating-buttons i:hover {
+    color: #333;
+    background-color: #f0f0f0;
+}
+
 
 /* Guessing interfaces */
 #guessing-interfaces {

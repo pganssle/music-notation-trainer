@@ -8,6 +8,10 @@ layout: default
         <i class="fa fa-undo" id="undo-button" title="Back"></i>
         <i class="fa fa-refresh" id="reset-session-button" title="Reset Session"></i>
       </div>
+      <div id="floating-buttons">
+        <i class="fa fa-line-chart" id="history-button"></i>
+        <i class="fa fa-gear" id="settings-button"></i>
+      </div>
       <div id="guessing-interfaces">
         <!-- Note Name Guessing Interface -->
         <div id="note-name-interface" class="guessing-interface hidden">
@@ -115,69 +119,12 @@ layout: default
       </div>
     </div>
     <div class="side-panel">
-      <div id="settings" class="panel">
-        <i class="fa fa-gear" id="settings-button"></i>
-      </div>
-      <div id="settings-modal" class="modal">
-        <div class="modal-content">
-          <span class="close-button">&times;</span>
-          <h2>Settings</h2>
-          <div class="setting">
-            <label for="current-user">Current User:</label>
-            <select id="current-user-select">
-              <option value="default">Default User</option>
-            </select>
-            <button id="add-user-button" type="button">Add User</button>
-            <button id="delete-user-button" type="button">Delete User</button>
-          </div>
-          <div class="setting">
-            <label for="bass-clef-range">Bass Clef Range:</label>
-            <input type="text" id="bass-clef-range" value="B1-D4">
-          </div>
-          <div class="setting">
-            <label for="treble-clef-range">Treble Clef Range:</label>
-            <input type="text" id="treble-clef-range" value="B3-D6">
-          </div>
-          <div class="setting">
-            <label for="include-sharps">Include Sharps:</label>
-            <input type="checkbox" id="include-sharps" checked>
-          </div>
-          <div class="setting">
-            <label for="include-flats">Include Flats:</label>
-            <input type="checkbox" id="include-flats">
-          </div>
-          <div class="setting">
-            <h3>Guessing Modes:</h3>
-            <div class="mode-setting">
-              <label for="enable-keyboard-mode">Keyboard Mode:</label>
-              <input type="checkbox" id="enable-keyboard-mode" checked>
-            </div>
-            <div class="mode-setting">
-              <label for="enable-note-name-mode">Note Name Mode:</label>
-              <input type="checkbox" id="enable-note-name-mode">
-            </div>
-            <div class="mode-setting">
-              <label for="enable-staff-position-mode">Staff Position Mode:</label>
-              <input type="checkbox" id="enable-staff-position-mode">
-            </div>
-          </div>
-          <button id="save-settings">Save</button>
-        </div>
-      </div>
       <div id="stats" class="panel">
         <div id="stats-widget">
             <span id="stats-display">0 / 0 (0%)</span>
         </div>
-        <i class="fa fa-line-chart" id="history-button"></i>
         <div id="feedback"></div>
         <button id="standalone-next-button" class="submit-button" disabled style="margin-top: 10px; width: 100%;">Next</button>
-      </div>
-      <div id="history-modal" class="modal">
-        <div class="modal-content">
-            <span class="close-button">&times;</span>
-            <h2>Session History</h2>
-            <div id="session-history-list"></div>
-        </div>
       </div>
     </div>
   </div>
@@ -185,6 +132,54 @@ layout: default
       <div class="mode-feedback-indicator hidden" id="keyboard-feedback"></div>
       <div id="piano" class="panel">
       </div>
+  </div>
+
+  <!-- Settings modal -->
+  <div id="settings-modal" class="modal">
+    <div class="modal-content">
+      <span class="close-button">&times;</span>
+      <h2>Settings</h2>
+      <div class="setting">
+        <label for="current-user">Current User:</label>
+        <select id="current-user-select">
+          <option value="default">Default User</option>
+        </select>
+        <button id="add-user-button" type="button">Add User</button>
+        <button id="delete-user-button" type="button">Delete User</button>
+      </div>
+      <div class="setting">
+        <label for="bass-clef-range">Bass Clef Range:</label>
+        <input type="text" id="bass-clef-range" value="B1-D4">
+      </div>
+      <div class="setting">
+        <label for="treble-clef-range">Treble Clef Range:</label>
+        <input type="text" id="treble-clef-range" value="B3-D6">
+      </div>
+      <div class="setting">
+        <label for="include-sharps">Include Sharps:</label>
+        <input type="checkbox" id="include-sharps" checked>
+      </div>
+      <div class="setting">
+        <label for="include-flats">Include Flats:</label>
+        <input type="checkbox" id="include-flats">
+      </div>
+      <div class="setting">
+        <h3>Guessing Modes:</h3>
+        <div class="mode-setting">
+          <label for="enable-keyboard-mode">Keyboard Mode:</label>
+          <input type="checkbox" id="enable-keyboard-mode" checked>
+        </div>
+        <div class="mode-setting">
+          <label for="enable-note-name-mode">Note Name Mode:</label>
+          <input type="checkbox" id="enable-note-name-mode">
+        </div>
+        <div class="mode-setting">
+          <label for="enable-staff-position-mode">Staff Position Mode:</label>
+          <input type="checkbox" id="enable-staff-position-mode">
+        </div>
+      </div>
+      <button id="save-settings">Save</button>
+    </div>
   </div>
 
   <!-- Add User Modal -->
@@ -198,6 +193,15 @@ layout: default
       </div>
       <button id="create-user-button">Create User</button>
       <button id="cancel-user-button">Cancel</button>
+    </div>
+  </div>
+
+  <!-- Session history modal -->
+  <div id="history-modal" class="modal">
+    <div class="modal-content">
+        <span class="close-button">&times;</span>
+        <h2>Session History</h2>
+        <div id="session-history-list"></div>
     </div>
   </div>
 </div>
