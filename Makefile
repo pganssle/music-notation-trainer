@@ -2,7 +2,7 @@ JEKYLL=bundle exec jekyll
 SHELL=bash
 
 # Targets
-.PHONY: all serve clean clean-dist
+.PHONY: all serve clean clean-dist dev html
 
 vendor/bundle:
 	bundle config set --local path 'vendor/bundle'
@@ -16,13 +16,22 @@ clean-dist:
 
 assets/dist:
 	npm install
-	npm run build:dev
+	npm run build
 
-html: vendor/bundle
+dev: vendor/bundle assets/dist
+	npm run build:dev
 	$(JEKYLL) build
 
+html: vendor/bundle assets/dist
+	npm run build
+	$(JEKYLL) build
+
+# Rebuild both jekyll and npm on changes
 serve: vendor/bundle assets/dist
-	$(JEKYLL) serve -w
+	@trap 'kill 0' SIGINT; \
+	npm run build:watch & \
+	$(JEKYLL) serve -w & \
+	wait
 
 test: assets/dist
 	@echo "Opening tests.html in your browser..."
