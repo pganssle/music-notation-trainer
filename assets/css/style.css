@@ -1,12 +1,16 @@
-body {
+html, body {
   font-family: sans-serif;
   margin: 0;
+  padding: 0;
+  height: 100dvh;
+  position: fixed;
+  width: 100%;
 }
 
 .container {
   display: flex;
   flex-direction: column;
-  height: 100vh;
+  height: 100dvh;
 }
 
 .top-row {
@@ -49,20 +53,7 @@ body {
     align-items: center;
     flex-grow: 0;
     height: 30dvh;
-}
-
-#piano {
-  height: 200px;
-}
-
-#feedback {
-    text-align: center;
-    font-size: 3em;
-    margin-top: 10px;
-}
-
-.panel {
-  margin: 5px;
+    width: 100dvw;
 }
 
 #piano {
@@ -70,6 +61,10 @@ body {
     justify-content: center;
     align-items: flex-start;
     position: relative;
+    height: 20dvh;
+    width: 100%;
+    max-width: 95dvw;
+    max-height: 350px;
 }
 
 .key {
@@ -78,18 +73,18 @@ body {
 }
 
 .white {
-    width: 40px;
-    height: 180px;
+    width: calc(100% / 31);
+    height: 100%;
     background-color: white;
     margin-left: -1px;
 }
 
 .black {
-    width: 24px;
-    height: 120px;
+    width: calc(100% / 62);
+    height: 60%;
     background-color: black;
-    margin-left: -12px;
-    margin-right: -12px;
+    margin-left: calc(-100% / 124) ;
+    margin-right: calc(-100% / 124);
     z-index: 2;
 }
 
@@ -108,6 +103,17 @@ body {
 
 .key.incorrect {
     background-color: #ff8a80;
+}
+
+
+#feedback {
+    text-align: center;
+    font-size: 3em;
+    margin-top: 10px;
+}
+
+.panel {
+  margin: 5px;
 }
 
 #settings-button {
