@@ -539,7 +539,7 @@ i.answer-icon.incorrect:before {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 10px;
+    margin-bottom: 0.625em;
 }
 
 .session-history-date {
@@ -562,10 +562,40 @@ i.answer-icon.incorrect:before {
     color: #F44336;
 }
 
+.session-history-stats {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25em;
+}
+
+.stats-item {
+    display: flex;
+    align-items: center;
+    gap: 0.3em;
+    font-size: 1.2em;
+    font-weight: bold;
+}
+
+.stats-item .emoji-indicator {
+    font-size: 1.1em;
+}
+
+.stats-item.excellent {
+    color: #4CAF50;
+}
+
+.stats-item.good {
+    color: #FF9800;
+}
+
+.stats-item.needs-work {
+    color: #F44336;
+}
+
 .session-history-duration {
     color: #666;
     font-size: 0.9em;
-    margin-bottom: 8px;
+    margin-bottom: 0.5em;
 }
 
 .session-history-settings {
@@ -577,5 +607,5 @@ i.answer-icon.incorrect:before {
     color: #666;
     font-style: italic;
     text-align: center;
-    padding: 20px;
+    padding: 1.25em;
 }
