@@ -1784,11 +1784,16 @@ function populateSessionHistory() {
         const totalGuesses = session.guesses.length;
         const correctGuesses = session.guesses.filter(guess => guess.correct).length;
         const percentage = totalGuesses > 0 ? Math.round((correctGuesses / totalGuesses) * 100) : 0;
+        // Calculate duration from first to last answer
+        let duration = 0;
+        if (session.guesses && session.guesses.length > 0) {
+            const firstGuessTime = session.guesses[0].startTime;
+            const lastGuessTime = session.guesses[session.guesses.length - 1].endTime;
+            duration = Math.round((lastGuessTime - firstGuessTime) / 1000 / 60); // minutes
+        }
 
         // Format dates
         const startDate = new Date(session.startTime);
-        const endDate = new Date(session.endTime);
-        const duration = Math.round((session.endTime - session.startTime) / 1000 / 60); // minutes
 
         // Get settings info (with fallback for older sessions)
         const settings = session.settings || {
