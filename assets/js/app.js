@@ -1757,11 +1757,8 @@ function populateSessionHistory() {
 
     if (user.sessionHistory.length === 0) {
         const emptyMessage = document.createElement("p");
+        emptyMessage.className = "session-history-empty";
         emptyMessage.textContent = "No session history yet. Complete some practice sessions to see your progress here!";
-        emptyMessage.style.color = "#666";
-        emptyMessage.style.fontStyle = "italic";
-        emptyMessage.style.textAlign = "center";
-        emptyMessage.style.padding = "20px";
         historyList.appendChild(emptyMessage);
         return;
     }
@@ -1772,13 +1769,6 @@ function populateSessionHistory() {
     sortedSessions.forEach(session => {
         const sessionDiv = document.createElement("div");
         sessionDiv.classList.add("session-history-item");
-        sessionDiv.style.cssText = `
-            border: 1px solid #ddd;
-            border-radius: 8px;
-            padding: 15px;
-            margin-bottom: 10px;
-            background: #f9f9f9;
-        `;
 
         // Calculate session stats
         const totalGuesses = session.guesses.length;
@@ -1803,17 +1793,19 @@ function populateSessionHistory() {
             includeFlats: false
         };
 
+        const scoreClass = percentage >= 80 ? 'excellent' : percentage >= 60 ? 'good' : 'needs-work';
+
         sessionDiv.innerHTML = `
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
-                <strong style="color: #333;">${startDate.toLocaleDateString()} ${startDate.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</strong>
-                <span style="color: ${percentage >= 80 ? '#4CAF50' : percentage >= 60 ? '#FF9800' : '#F44336'}; font-weight: bold;">
+            <div class="session-history-header">
+                <strong class="session-history-date">${startDate.toLocaleDateString()} ${startDate.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</strong>
+                <span class="session-history-score ${scoreClass}">
                     ${correctGuesses}/${totalGuesses} (${percentage}%)
                 </span>
             </div>
-            <div style="color: #666; font-size: 0.9em; margin-bottom: 8px;">
+            <div class="session-history-duration">
                 Duration: ${duration} minute${duration !== 1 ? 's' : ''}
             </div>
-            <div style="color: #666; font-size: 0.9em;">
+            <div class="session-history-settings">
                 <div>Bass: ${settings.bassClefRange} | Treble: ${settings.trebleClefRange}</div>
                 <div>Accidentals: ${settings.includeSharps ? 'Sharps' : ''}${settings.includeSharps && settings.includeFlats ? ' & ' : ''}${settings.includeFlats ? 'Flats' : ''}${!settings.includeSharps && !settings.includeFlats ? 'None' : ''}</div>
             </div>

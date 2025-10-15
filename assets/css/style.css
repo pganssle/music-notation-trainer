@@ -526,3 +526,56 @@ i.answer-icon.incorrect:before {
     -webkit-text-stroke-width: 2px;
     -webkit-text-stroke-color: black;
 }
+
+.session-history-item {
+    border: 1px solid #ddd;
+    border-radius: 1em;
+    padding: 1.5em;
+    margin-bottom: 0.5em;
+    background: #f9f9f9;
+}
+
+.session-history-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+}
+
+.session-history-date {
+    color: #333;
+}
+
+.session-history-score {
+    font-weight: bold;
+}
+
+.session-history-score.excellent {
+    color: #4CAF50;
+}
+
+.session-history-score.good {
+    color: #FF9800;
+}
+
+.session-history-score.needs-work {
+    color: #F44336;
+}
+
+.session-history-duration {
+    color: #666;
+    font-size: 0.9em;
+    margin-bottom: 8px;
+}
+
+.session-history-settings {
+    color: #666;
+    font-size: 0.9em;
+}
+
+.session-history-empty {
+    color: #666;
+    font-style: italic;
+    text-align: center;
+    padding: 20px;
+}
