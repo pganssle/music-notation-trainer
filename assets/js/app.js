@@ -1767,8 +1767,12 @@ function populateSessionHistory() {
     const sortedSessions = [...user.sessionHistory].sort((a, b) => b.endTime - a.endTime);
 
     sortedSessions.forEach(session => {
-        const sessionDiv = document.createElement("div");
-        sessionDiv.classList.add("session-history-item");
+        // Clone the template node
+        const template = document.getElementById('session-history-item-clonable');
+        const sessionDiv = template.cloneNode(true);
+
+        // Remove the id from the cloned node
+        sessionDiv.removeAttribute('id');
 
         // Calculate duration from first to last answer
         let duration = 0;
@@ -1796,29 +1800,36 @@ function populateSessionHistory() {
             includeFlats: false
         };
 
-        // Create header
-        const header = document.createElement('div');
-        header.className = 'session-history-header';
+        // Populate session datetime
+        const datetimeElement = sessionDiv.querySelector('.session-history-datetime');
+        datetimeElement.textContent = `${startDate.toLocaleDateString()} ${startDate.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}`;
 
-        // Create date element
-        const dateElement = document.createElement('strong');
-        dateElement.className = 'session-history-date';
-        dateElement.textContent = `${startDate.toLocaleDateString()} ${startDate.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}`;
-        header.appendChild(dateElement);
+        // Populate duration
+        const durationValue = sessionDiv.querySelector('.duration-value');
+        durationValue.textContent = `${duration} minute${duration !== 1 ? 's' : ''}`;
 
-        // Create stats container
-        const statsContainer = document.createElement('div');
-        statsContainer.className = 'session-history-stats';
+        // Populate note ranges
+        const noteRanges = sessionDiv.querySelector('.note-ranges');
+        noteRanges.textContent = `Bass: ${settings.bassClefRange} | Treble: ${settings.trebleClefRange}`;
 
-        // Build stats for each mode that has guesses
+        // Populate accidentals
+        const accidentalsValue = sessionDiv.querySelector('.accidentals-value');
+        const accidentalsParts = [];
+        if (settings.includeSharps) accidentalsParts.push('Sharps');
+        if (settings.includeFlats) accidentalsParts.push('Flats');
+        accidentalsValue.textContent = accidentalsParts.length > 0 ? accidentalsParts.join(' & ') : 'None';
+
+        // Process stats for each mode
         const modeConfigs = [
-            { mode: 'keyboard', emoji: '🎹', className: 'keyboard-stats' },
-            { mode: 'noteName', emoji: '🎶', className: 'note-name-stats' },
-            { mode: 'staffPosition', emoji: '🎼', className: 'staff-position-stats' }
+            { mode: 'keyboard', className: 'keyboard-stats' },
+            { mode: 'noteName', className: 'note-name-stats' },
+            { mode: 'staffPosition', className: 'staff-position-stats' }
         ];
 
-        modeConfigs.forEach(({ mode, emoji, className }) => {
+        modeConfigs.forEach(({ mode, className }) => {
+            const statsItem = sessionDiv.querySelector(`.${className}`);
             const guesses = modeGuesses[mode] || [];
+
             if (guesses.length > 0) {
                 const correct = guesses.filter(g => g.correct).length;
                 const percentage = Math.round((correct / guesses.length) * 100);
@@ -1826,70 +1837,17 @@ function populateSessionHistory() {
                 // Determine quality class
                 const qualityClass = percentage >= 80 ? 'excellent' :
                                     percentage >= 60 ? 'good' : 'needs-work';
+                statsItem.classList.add(qualityClass);
 
-                // Create stats item div
-                const statsItem = document.createElement('div');
-                statsItem.className = `stats-item ${className} ${qualityClass}`;
-
-                // Create and append emoji indicator
-                const emojiSpan = document.createElement('span');
-                emojiSpan.className = 'emoji-indicator';
-                emojiSpan.textContent = emoji;
-                statsItem.appendChild(emojiSpan);
-
-                // Create and append correct guesses
-                const correctSpan = document.createElement('span');
-                correctSpan.className = 'correct-guesses';
-                correctSpan.textContent = correct;
-                statsItem.appendChild(correctSpan);
-
-                // Create and append divider
-                const dividerSpan = document.createElement('span');
-                dividerSpan.className = 'guess-divider';
-                dividerSpan.textContent = ' / ';
-                statsItem.appendChild(dividerSpan);
-
-                // Create and append total guesses
-                const totalSpan = document.createElement('span');
-                totalSpan.className = 'total-guesses';
-                totalSpan.textContent = guesses.length;
-                statsItem.appendChild(totalSpan);
-
-                // Create and append percentage
-                const percentageSpan = document.createElement('span');
-                percentageSpan.className = 'percentage';
-                percentageSpan.textContent = ` (${percentage}%)`;
-                statsItem.appendChild(percentageSpan);
-
-                statsContainer.appendChild(statsItem);
+                // Populate the spans
+                statsItem.querySelector('.correct-guesses').textContent = correct;
+                statsItem.querySelector('.total-guesses').textContent = guesses.length;
+                statsItem.querySelector('.percentage').textContent = ` (${percentage}%)`;
+            } else {
+                // Remove the stats item if there are no guesses for this mode
+                statsItem.remove();
             }
         });
-
-        header.appendChild(statsContainer);
-        sessionDiv.appendChild(header);
-
-        // Create duration element
-        const durationDiv = document.createElement('div');
-        durationDiv.className = 'session-history-duration';
-        durationDiv.textContent = `Duration: ${duration} minute${duration !== 1 ? 's' : ''}`;
-        sessionDiv.appendChild(durationDiv);
-
-        // Create settings element
-        const settingsDiv = document.createElement('div');
-        settingsDiv.className = 'session-history-settings';
-
-        const rangeDiv = document.createElement('div');
-        rangeDiv.textContent = `Bass: ${settings.bassClefRange} | Treble: ${settings.trebleClefRange}`;
-        settingsDiv.appendChild(rangeDiv);
-
-        const accidentalsDiv = document.createElement('div');
-        const accidentalsParts = [];
-        if (settings.includeSharps) accidentalsParts.push('Sharps');
-        if (settings.includeFlats) accidentalsParts.push('Flats');
-        accidentalsDiv.textContent = `Accidentals: ${accidentalsParts.length > 0 ? accidentalsParts.join(' & ') : 'None'}`;
-        settingsDiv.appendChild(accidentalsDiv);
-
-        sessionDiv.appendChild(settingsDiv);
 
         historyList.appendChild(sessionDiv);
     });

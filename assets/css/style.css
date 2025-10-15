@@ -528,6 +528,9 @@ i.answer-icon.incorrect:before {
 }
 
 .session-history-item {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
     border: 1px solid #ddd;
     border-radius: 1em;
     padding: 1.5em;
@@ -535,15 +538,15 @@ i.answer-icon.incorrect:before {
     background: #f9f9f9;
 }
 
-.session-history-header {
+.session-history-metadata {
     display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 0.625em;
+    flex-direction: column;
+    justify-content: flex-start;
+    gap: 0.25em;
 }
 
-.session-history-date {
-    color: #333;
+.session-history-datetime {
+    font-weight: bold;
 }
 
 .session-history-score {
@@ -608,4 +611,8 @@ i.answer-icon.incorrect:before {
     font-style: italic;
     text-align: center;
     padding: 1.25em;
+}
+
+#session-history-item-clonable {
+    display: none;
 }
