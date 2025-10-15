@@ -141,20 +141,40 @@ html, body {
     margin: 15% auto;
     padding: 20px;
     border: 1px solid #888;
+    border-radius: 8px;
     width: 80%;
+    position: relative;
 }
 
 .close-button {
     color: #000;
-    font-size: 2em;
     font-weight: bold;
+    font-size: 2em;
+    cursor: pointer;
 }
 
-.close-button:hover,
-.close-button:focus {
-    color: black;
+.big-modal .close-button {
+    position: absolute;
+    top: 0.5em;
+    right: 1em;
+    background-color: rgba(255, 255, 255, 0.9);
+    border: 1px solid #ccc;
+    border-radius: 0.15em;
+    width: 1.5em;
+    height: 1.5em;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    line-height: 1;
+    transition: all 0.2s ease;
+    z-index: 10;
+}
+
+.big-modal .close-button:hover,
+.big-modal .close-button:focus {
+    color: #333;
+    background-color: #f0f0f0;
     text-decoration: none;
-    cursor: pointer;
 }
 
 #stats-widget {
