@@ -89,12 +89,15 @@ html, body {
 }
 
 .middle-c::after {
-    content: '•';
+    content: '';
     position: absolute;
-    bottom: 15%;
+    bottom: 10%;
     left: 50%;
-    transform: translateX(-50%);
-    font-size: 20px;
+    transform: translate(-50%, 50%);
+    width: 1em;
+    height: 1em;
+    background-color: #333;
+    border-radius: 50%;
 }
 
 .key.correct {
